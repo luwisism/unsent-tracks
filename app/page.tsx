@@ -1002,6 +1002,7 @@ export default function SwissUnsentPlatform() {
 
       {activeStoryUser && (
         <StoryViewerModal
+          key={`${activeStoryUser.username}-${activeStoryUser.notes?.[storyIndex]?.id ?? storyIndex}`}
           storyUser={activeStoryUser}
           storyIndex={storyIndex}
           storyProgress={storyProgress}
