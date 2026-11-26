@@ -366,27 +366,27 @@ export default function ComposerModal({
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-3 border border-[#111111] bg-white p-3">
-            <div>
+          <div className="grid min-w-0 grid-cols-1 gap-3 overflow-hidden border border-[#111111] bg-white p-3 sm:grid-cols-2">
+            <div className="min-w-0">
               <label className="mb-1 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider">
-                <KeyRound className="h-3 w-3 text-[#E11D2A]" /> Passcode Lock (Optional)
+                <KeyRound className="h-3 w-3 shrink-0 text-[#E11D2A]" /> Passcode Lock (Optional)
               </label>
               <input
                 type="text"
                 placeholder="4-digit PIN..."
                 value={passcode}
                 onChange={(e) => setPasscode(e.target.value)}
-                className="w-full border border-[#111111] px-2.5 py-1.5 font-mono text-xs outline-none"
+                className="w-full min-w-0 border border-[#111111] px-2.5 py-2 font-mono text-xs outline-none"
               />
             </div>
-            <div>
+            <div className="min-w-0">
               <label className="mb-1 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider">
-                <Flame className="h-3 w-3 text-[#E11D2A]" /> Burn After Listens
+                <Flame className="h-3 w-3 shrink-0 text-[#E11D2A]" /> Burn After Listens
               </label>
               <select
                 value={maxListens}
                 onChange={(e) => setMaxListens(e.target.value)}
-                className="w-full border border-[#111111] bg-white px-2.5 py-1.5 font-mono text-xs outline-none"
+                className="w-full min-w-0 border border-[#111111] bg-white px-2.5 py-2 font-mono text-xs outline-none"
               >
                 <option value="">Permanent (Default)</option>
                 <option value="1">1 Full Listen (Self-Destruct)</option>
@@ -395,31 +395,31 @@ export default function ComposerModal({
               </select>
             </div>
             {passcode && (
-              <div className="col-span-2">
+              <div className="min-w-0 sm:col-span-2">
                 <input
                   type="text"
                   placeholder="Secret hint (e.g. Where we first met...)"
                   value={passcodeHint}
                   onChange={(e) => setPasscodeHint(e.target.value)}
-                  className="w-full border border-[#111111] px-2.5 py-1.5 font-mono text-xs outline-none"
+                  className="w-full min-w-0 border border-[#111111] px-2.5 py-2 font-mono text-xs outline-none"
                 />
               </div>
             )}
-            <div className="col-span-2">
+            <div className="min-w-0 sm:col-span-2">
               <label className="mb-1 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider">
-                <Lock className="h-3 w-3 text-[#E11D2A]" /> Time-Capsule Unlock Date (Optional)
+                <Lock className="h-3 w-3 shrink-0 text-[#E11D2A]" /> Time-Capsule Unlock Date (Optional)
               </label>
               <input
                 type="datetime-local"
                 value={unlockAt}
                 onChange={(e) => setUnlockAt(e.target.value)}
-                className="w-full border border-[#111111] px-2.5 py-1.5 font-mono text-xs outline-none"
+                className="block w-full min-w-0 max-w-full appearance-none border border-[#111111] bg-white px-2.5 py-2 font-mono text-xs outline-none"
               />
             </div>
           </div>
 
           {/* Card Surface Swatches + Custom Color Picker */}
-          <div>
+          <div className="min-w-0">
             <div className="mb-1.5 flex items-center justify-between">
               <label className="text-[11px] font-bold uppercase tracking-[0.15em]">
                 04 / Card Surface Color
@@ -434,15 +434,15 @@ export default function ComposerModal({
                 {moodColor.toUpperCase()}
               </span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="grid flex-1 grid-cols-6 gap-1.5">
+            <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
+              <div className="grid w-full grid-cols-6 gap-1.5 sm:w-auto sm:flex-1">
                 {SWISS_SWATCHES.map((s) => (
                   <button
                     key={s.hex}
                     type="button"
                     onClick={() => setMoodColor(s.hex)}
                     style={{ backgroundColor: s.hex, color: s.text }}
-                    className={`flex h-8 items-center justify-center border border-[#111111] ${
+                    className={`flex h-9 sm:h-8 items-center justify-center border border-[#111111] ${
                       moodColor.toLowerCase() === s.hex.toLowerCase()
                         ? "ring-2 ring-[#E11D2A] ring-offset-1"
                         : ""
@@ -456,7 +456,7 @@ export default function ComposerModal({
               </div>
               <label
                 title="Custom hex surface color"
-                className="flex h-8 cursor-pointer items-center gap-1 border border-[#111111] bg-white px-2 font-mono text-[10px] font-bold uppercase hover:bg-[#111111] hover:text-white"
+                className="flex h-9 sm:h-8 w-full sm:w-auto shrink-0 cursor-pointer items-center justify-center gap-1.5 border border-[#111111] bg-white px-2.5 font-mono text-[10px] font-bold uppercase hover:bg-[#111111] hover:text-white"
               >
                 <input
                   type="color"
