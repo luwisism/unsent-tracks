@@ -14,119 +14,133 @@ function sanitizeNote(note: Record<string, unknown>, unlockedIds: Set<number>) {
 }
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const search = searchParams.get("search") || "";
-  const color = searchParams.get("color") || "";
-  const tag = searchParams.get("tag") || searchParams.get("archetype") || "";
-  const idParam = searchParams.get("id");
-  const unlockedParam = searchParams.get("unlocked") || "";
+  try {
+    const { searchParams } = new URL(request.url);
+    const search = searchParams.get("search") || "";
+    const color = searchParams.get("color") || "";
+    const tag = searchParams.get("tag") || searchParams.get("archetype") || "";
+    const idParam = searchParams.get("id");
+    const unlockedParam = searchParams.get("unlocked") || "";
 
-  const unlockedIds = new Set(
-    unlockedParam
-      .split(",")
-      .map((s) => Number(s.trim()))
-      .filter((n) => !Number.isNaN(n) && n > 0)
-  );
+    const unlockedIds = new Set(
+      unlockedParam
+        .split(",")
+        .map((s) => Number(s.trim()))
+        .filter((n) => !Number.isNaN(n) && n > 0)
+    );
 
-  const notes = await prisma.note.findMany({
-    where: {
-      AND: [
-        idParam ? { id: Number(idParam) } : {},
-        search
-          ? {
-              OR: [
-                { recipient: { contains: search } },
-                { message: { contains: search } },
-                { trackName: { contains: search } },
-                { artistName: { contains: search } },
-                { lyricExcerpt: { contains: search } },
-                { user: { username: { contains: search } } },
-                { user: { tags: { contains: search } } },
-              ],
-            }
-          : {},
-        color ? { moodColor: { equals: color } } : {},
-        tag
-          ? {
-              user: {
-                OR: [{ tags: { contains: tag } }, { archetype: { contains: tag } }],
-              },
-            }
-          : {},
-      ],
-    },
-    include: {
-      reactions: { select: { id: true, type: true, userId: true } },
-      replies: { orderBy: { createdAt: "asc" } },
-      user: {
-        select: {
-          id: true,
-          username: true,
-          monogramColor: true,
-          archetype: true,
-          tags: true,
+    const notes = await prisma.note.findMany({
+      where: {
+        AND: [
+          idParam ? { id: Number(idParam) } : {},
+          search
+            ? {
+                OR: [
+                  { recipient: { contains: search, mode: "insensitive" } },
+                  { message: { contains: search, mode: "insensitive" } },
+                  { trackName: { contains: search, mode: "insensitive" } },
+                  { artistName: { contains: search, mode: "insensitive" } },
+                  { lyricExcerpt: { contains: search, mode: "insensitive" } },
+                  { user: { username: { contains: search, mode: "insensitive" } } },
+                  { user: { tags: { contains: search, mode: "insensitive" } } },
+                ],
+              }
+            : {},
+          color ? { moodColor: { equals: color, mode: "insensitive" } } : {},
+          tag
+            ? {
+                user: {
+                  OR: [
+                    { tags: { contains: tag, mode: "insensitive" } },
+                    { archetype: { contains: tag, mode: "insensitive" } },
+                  ],
+                },
+              }
+            : {},
+        ],
+      },
+      include: {
+        reactions: { select: { id: true, type: true, userId: true } },
+        replies: { orderBy: { createdAt: "asc" } },
+        user: {
+          select: {
+            id: true,
+            username: true,
+            monogramColor: true,
+            archetype: true,
+            tags: true,
+          },
         },
       },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+      orderBy: { createdAt: "desc" },
+    });
 
-  // Collect all distinct surface colors & user tags across the archive
-  const allNotesMeta = await prisma.note.findMany({
-    select: {
-      moodColor: true,
-      user: { select: { tags: true, archetype: true } },
-    },
-  });
+    const allNotesMeta = await prisma.note.findMany({
+      select: {
+        moodColor: true,
+        user: { select: { tags: true, archetype: true } },
+      },
+    });
 
-  const colorSet = new Set<string>();
-  const tagCounts = new Map<string, number>();
+    const colorSet = new Set<string>();
+    const tagCounts = new Map<string, number>();
 
-  for (const item of allNotesMeta) {
-    if (item.moodColor) colorSet.add(item.moodColor.toUpperCase());
-    const rawTags = item.user?.tags || item.user?.archetype || "";
-    rawTags
-      .split(",")
-      .map((t) => t.trim().toUpperCase())
-      .filter(Boolean)
-      .forEach((t) => {
-        tagCounts.set(t, (tagCounts.get(t) || 0) + 1);
-      });
+    for (const item of allNotesMeta) {
+      if (item.moodColor) colorSet.add(item.moodColor.toUpperCase());
+      const rawTags = item.user?.tags || item.user?.archetype || "";
+      rawTags
+        .split(",")
+        .map((t) => t.trim().toUpperCase())
+        .filter(Boolean)
+        .forEach((t) => {
+          tagCounts.set(t, (tagCounts.get(t) || 0) + 1);
+        });
+    }
+
+    const availableTags = Array.from(tagCounts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([t]) => t);
+
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const activeStoryUsers = await prisma.user.findMany({
+      where: {
+        notes: { some: { createdAt: { gte: yesterday }, passcode: null } },
+      },
+      select: {
+        id: true,
+        username: true,
+        monogramColor: true,
+        archetype: true,
+        tags: true,
+        notes: {
+          where: { createdAt: { gte: yesterday }, passcode: null },
+          include: {
+            reactions: { select: { id: true, type: true } },
+            replies: { orderBy: { createdAt: "asc" } },
+          },
+          orderBy: { createdAt: "asc" },
+        },
+      },
+    });
+
+    return NextResponse.json(
+      {
+        notes: notes.map((n) => sanitizeNote(n as unknown as Record<string, unknown>, unlockedIds)),
+        stories: activeStoryUsers,
+        availableColors: Array.from(colorSet),
+        availableTags,
+      },
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate",
+        },
+      }
+    );
+  } catch (err) {
+    console.error("GET /api/notes error:", err);
+    return NextResponse.json({ error: "Failed to load archive" }, { status: 500 });
   }
-
-  const availableTags = Array.from(tagCounts.entries())
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 10)
-    .map(([t]) => t);
-
-  const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
-  const activeStoryUsers = await prisma.user.findMany({
-    where: {
-      notes: { some: { createdAt: { gte: yesterday }, passcode: null } },
-    },
-    select: {
-      id: true,
-      username: true,
-      monogramColor: true,
-      archetype: true,
-      tags: true,
-      notes: {
-        where: { createdAt: { gte: yesterday }, passcode: null },
-        include: {
-          reactions: { select: { id: true, type: true } },
-          replies: { orderBy: { createdAt: "asc" } },
-        },
-        orderBy: { createdAt: "asc" },
-      },
-    },
-  });
-
-  return NextResponse.json({
-    notes: notes.map((n) => sanitizeNote(n as unknown as Record<string, unknown>, unlockedIds)),
-    stories: activeStoryUsers,
-    availableColors: Array.from(colorSet),
-    availableTags,
-  });
 }
 
 export async function POST(request: Request) {

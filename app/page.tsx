@@ -176,7 +176,7 @@ export default function SwissUnsentPlatform() {
       if (filterTag) params.set("tag", filterTag);
       if (unlockedNoteIds.length > 0) params.set("unlocked", unlockedNoteIds.join(","));
 
-      const res = await fetch(`/api/notes?${params.toString()}`);
+      const res = await fetch(`/api/notes?${params.toString()}`, { cache: "no-store" });
       if (!res.ok) return;
       const data = await res.json();
       if (data.notes) setNotes(data.notes);
