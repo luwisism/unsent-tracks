@@ -343,27 +343,25 @@ export default function SwissUnsentPlatform() {
     const prevHtmlBg = document.documentElement.style.backgroundColor;
     const prevBodyBg = document.body.style.backgroundColor;
 
-    const applyThemeColor = (color: string) => {
-      document.querySelectorAll('meta[name="theme-color"]').forEach((el) => el.remove());
-      const freshMeta = document.createElement("meta");
-      freshMeta.setAttribute("name", "theme-color");
-      freshMeta.setAttribute("content", color);
-      document.head.appendChild(freshMeta);
+    const setThemeMeta = (color: string) => {
+      let meta = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null;
+      if (!meta) {
+        meta = document.createElement("meta");
+        meta.name = "theme-color";
+        document.head.appendChild(meta);
+      }
+      meta.setAttribute("content", color);
       document.documentElement.style.backgroundColor = color;
       document.body.style.backgroundColor = color;
-      void document.documentElement.offsetHeight;
     };
 
     const rafId = window.requestAnimationFrame(() => {
-      applyThemeColor(nextColor);
-      try {
-        window.scrollBy(0, 0);
-      } catch {}
+      setThemeMeta(nextColor);
     });
 
     return () => {
       window.cancelAnimationFrame(rafId);
-      applyThemeColor(prevTheme);
+      setThemeMeta(prevTheme);
       document.documentElement.style.backgroundColor = prevHtmlBg;
       document.body.style.backgroundColor = prevBodyBg;
     };
@@ -1008,7 +1006,7 @@ export default function SwissUnsentPlatform() {
 
       {activeStoryUser && (
         <StoryViewerModal
-          key={`${activeStoryUser.username}-${activeStoryUser.notes?.[storyIndex]?.id ?? storyIndex}`}
+          key={activeStoryUser.username}
           storyUser={activeStoryUser}
           storyIndex={storyIndex}
           storyProgress={storyProgress}
