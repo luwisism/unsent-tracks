@@ -440,14 +440,6 @@ export async function downloadSwissProfilePoster(
   ctx.font = "bold 40px Helvetica, Arial, sans-serif";
   ctx.fillText(`@${profile.username}`, qrTextX, qrBoxTop + 132);
 
-  ctx.font = "22px monospace";
-  const urlLines = wrapLines(ctx, profileUrl.replace(/^https?:\/\//, ""), innerRight - qrTextX - 24, 2);
-  let uY = qrBoxTop + 182;
-  for (const ul of urlLines) {
-    ctx.fillText(ul, qrTextX, uY);
-    uY += 32;
-  }
-
   ctx.font = "bold 18px monospace";
   ctx.fillText("SIDE B ARCHIVE // VERIFIED FREQUENCY", qrTextX, qrBoxTop + 264);
 
