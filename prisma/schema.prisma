@@ -1,0 +1,132 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              Int       @id @default(autoincrement())
+  username        String    @unique
+  passcode        String
+  monogramColor   String    @default("#111111")
+  bio             String    @default("")
+  archetype       String    @default("OBSERVER")
+  tags            String    @default("LATE NIGHTS, ARCHIVE")
+  frequency       String    @default("02:00 AM")
+  coordinates     String    @default("00.0000° N, 00.0000° E")
+  anthemTrackId   String?
+  anthemTrackName String?
+  anthemArtist    String?
+  anthemAlbumArt  String?
+  anthemPreview   String?
+  pinnedNoteId    Int?
+  notes           Note[]
+  mixtapes        Mixtape[]
+  createdAt       DateTime  @default(now())
+  followers     Follow[]   @relation("UserFollowing")
+  following     Follow[]   @relation("UserFollowers")
+  activities    Activity[] @relation("UserActivities")
+
+}
+
+model Note {
+  id           Int           @id @default(autoincrement())
+  recipient    String
+  message      String
+  moodColor    String
+  trackId      String
+  trackName    String
+  artistName   String
+  albumArt     String
+  previewUrl   String?
+  lyricExcerpt String?
+  syncedLyrics String?
+  clipStart    Int           @default(0)
+  clipEnd      Int           @default(30)
+  unlockAt     DateTime?
+  passcode     String?
+  passcodeHint String?
+  maxListens   Int?
+  listenCount  Int           @default(0)
+  userId       Int?
+  user         User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  reactions    Reaction[]
+  replies      SongReply[]
+  mixtapeItems MixtapeItem[]
+  createdAt    DateTime      @default(now())
+  activities    Activity[]
+
+}
+
+model Reaction {
+  id        Int      @id @default(autoincrement())
+  type      String
+  noteId    Int
+  note      Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  userId    Int?
+  createdAt DateTime @default(now())
+}
+
+model SongReply {
+  id           Int      @id @default(autoincrement())
+  noteId       Int
+  note         Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  trackId      String
+  trackName    String
+  artistName   String
+  albumArt     String
+  previewUrl   String?
+  lyricExcerpt String?
+  senderHandle String?
+  createdAt    DateTime @default(now())
+}
+
+model Mixtape {
+  id          Int           @id @default(autoincrement())
+  title       String
+  subtitle    String        @default("")
+  coverColor  String        @default("#111111")
+  creatorName String        @default("UNLISTED")
+  userId      Int?
+  user        User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  items       MixtapeItem[]
+  createdAt   DateTime      @default(now())
+}
+
+model MixtapeItem {
+  id        Int     @id @default(autoincrement())
+  order     Int     @default(0)
+  mixtapeId Int
+  mixtape   Mixtape @relation(fields: [mixtapeId], references: [id], onDelete: Cascade)
+  noteId    Int
+  note      Note    @relation(fields: [noteId], references: [id], onDelete: Cascade)
+}
+
+
+model Follow {
+  id          Int      @id @default(autoincrement())
+  followerId  Int
+  followingId Int
+  createdAt   DateTime @default(now())
+
+  follower    User     @relation("UserFollowers", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("UserFollowing", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+}
+
+model Activity {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  type      String   // POSTED | REACTED | REPLIED | FOLLOWED | UPDATED_PROFILE
+  summary   String
+  noteId    Int?
+  target    String?
+  createdAt DateTime @default(now())
+
+  user      User     @relation("UserActivities", fields: [userId], references: [id], onDelete: Cascade)
+  note      Note?    @relation(fields: [noteId], references: [id], onDelete: SetNull)
+}
