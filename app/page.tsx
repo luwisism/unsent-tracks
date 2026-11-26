@@ -1041,6 +1041,18 @@ export default function SwissUnsentPlatform() {
             playPreview(url, id, start, end, false, activeNote.id)
           }
           onSeekAudio={handleSeekAudio}
+          onPrevNote={() => {
+            if (!notes.length) return;
+            const idx = notes.findIndex((n) => n.id === activeNote.id);
+            const prevIdx = idx > 0 ? idx - 1 : notes.length - 1;
+            setActiveNote(notes[prevIdx]);
+          }}
+          onNextNote={() => {
+            if (!notes.length) return;
+            const idx = notes.findIndex((n) => n.id === activeNote.id);
+            const nextIdx = idx >= 0 && idx + 1 < notes.length ? idx + 1 : 0;
+            setActiveNote(notes[nextIdx]);
+          }}
           onNoteUnlocked={handleNoteUnlocked}
           onReplyAdded={handleReplyAdded}
           onClose={() => setActiveNote(null)}
