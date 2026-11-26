@@ -334,7 +334,7 @@ export default function SwissUnsentPlatform() {
     const activeStoryNote = activeStoryUser?.notes?.[storyIndex];
     const nextColor =
       activeNote?.moodColor ||
-      activeStoryNote?.moodColor ||
+      (activeStoryNote ? "#111111" : undefined) ||
       viewedProfile?.monogramColor ||
       "#F4F4F0";
 
