@@ -330,6 +330,29 @@ export default function SwissUnsentPlatform() {
       ? stories[activeStoryUserIdx]
       : null;
 
+  useEffect(() => {
+    const activeStoryNote = activeStoryUser?.notes?.[storyIndex];
+    const nextColor =
+      activeNote?.moodColor || activeStoryNote?.moodColor || "#F4F4F0";
+
+    let meta = document.querySelector('meta[name="theme-color"]');
+    if (!meta) {
+      meta = document.createElement("meta");
+      meta.setAttribute("name", "theme-color");
+      document.head.appendChild(meta);
+    }
+    const prevTheme = meta.getAttribute("content") || "#F4F4F0";
+    const prevBodyBg = document.body.style.backgroundColor;
+
+    meta.setAttribute("content", nextColor);
+    document.body.style.backgroundColor = nextColor;
+
+    return () => {
+      meta.setAttribute("content", prevTheme);
+      document.body.style.backgroundColor = prevBodyBg;
+    };
+  }, [activeNote, activeStoryUser, storyIndex]);
+
   const advanceStory = useCallback(() => {
     if (activeStoryUserIdx === null || !stories[activeStoryUserIdx]) return;
     const currentUserStories = stories[activeStoryUserIdx].notes;
