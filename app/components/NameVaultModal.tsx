@@ -38,7 +38,7 @@ export default function NameVaultModal({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="h-dvh w-full max-w-none overflow-y-auto border-0 bg-[#F4F4F0] p-5 sm:h-auto sm:max-h-[90vh] sm:max-w-md sm:border-2 sm:border-[#111111] sm:p-7 text-[#111111] sm:shadow-[8px_8px_0px_#E11D2A]"
+        className="h-dvh w-full max-w-none overflow-y-auto border-0 bg-[#F4F4F0] pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(4rem,calc(env(safe-area-inset-bottom)+3rem))] px-5 sm:h-auto sm:max-h-[90vh] sm:max-w-md sm:border-2 sm:border-[#111111] sm:p-7 text-[#111111] sm:shadow-[8px_8px_0px_#E11D2A]"
       >
         <div className="mb-5 flex items-center justify-between border-b border-dashed border-[#111111] pb-4">
           <div>
@@ -81,7 +81,7 @@ export default function NameVaultModal({
         </form>
 
         {hasSearched && (
-          <div className="mt-6 border-2 border-dashed border-[#111111] bg-white p-5 font-mono">
+          <div className="mt-6 border-2 border-dashed border-[#111111] bg-white pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(4rem,calc(env(safe-area-inset-bottom)+3rem))] px-5 font-mono">
             <div className="mb-3 flex justify-between border-b border-neutral-300 pb-2 text-[10px] uppercase text-neutral-500">
               <span>QUERY: “{queryName.toUpperCase()}”</span>
               <span>{new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>

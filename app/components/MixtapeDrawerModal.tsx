@@ -77,7 +77,7 @@ export default function MixtapeDrawerModal({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="h-dvh w-full max-w-none overflow-y-auto border-0 bg-[#F4F4F0] p-5 sm:h-auto sm:max-h-[90vh] sm:max-w-2xl sm:border-2 sm:border-[#111111] sm:p-7 text-[#111111] sm:shadow-[8px_8px_0px_#111111]"
+        className="h-dvh w-full max-w-none overflow-y-auto border-0 bg-[#F4F4F0] pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(4rem,calc(env(safe-area-inset-bottom)+3rem))] px-5 sm:h-auto sm:max-h-[90vh] sm:max-w-2xl sm:border-2 sm:border-[#111111] sm:p-7 text-[#111111] sm:shadow-[8px_8px_0px_#111111]"
       >
         <div className="mb-5 flex items-center justify-between border-b border-[#111111] pb-4">
           <div>
@@ -209,7 +209,7 @@ export default function MixtapeDrawerModal({
                 <div
                   key={tape.id}
                   style={{ backgroundColor: tape.coverColor, color: fg }}
-                  className="border-2 border-[#111111] p-5"
+                  className="border-2 border-[#111111] pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(4rem,calc(env(safe-area-inset-bottom)+3rem))] px-5"
                 >
                   <div className="flex items-start justify-between gap-4 border-b border-current/25 pb-3">
                     <div>

@@ -544,7 +544,7 @@ export default function ProfileModal({
             {activeTab === "NOTES" && (
               <div className="space-y-2.5">
                 {notes.length === 0 ? (
-                  <div className="border border-dashed border-[#111111] bg-white p-5 text-center font-mono text-[10px] uppercase text-neutral-500">
+                  <div className="border border-dashed border-[#111111] bg-white pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(4rem,calc(env(safe-area-inset-bottom)+3rem))] px-5 text-center font-mono text-[10px] uppercase text-neutral-500">
                     NO TRANSMISSIONS ARCHIVED YET.
                   </div>
                 ) : (
@@ -614,11 +614,11 @@ export default function ProfileModal({
             {activeTab === "ACTIVITY" && (
               <div className="space-y-2">
                 {loadingFeed ? (
-                  <div className="border border-[#111111] bg-white p-5 text-center font-mono text-[10px] uppercase text-neutral-500">
+                  <div className="border border-[#111111] bg-white pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(4rem,calc(env(safe-area-inset-bottom)+3rem))] px-5 text-center font-mono text-[10px] uppercase text-neutral-500">
                     LOADING LOG...
                   </div>
                 ) : activities.length === 0 ? (
-                  <div className="border border-dashed border-[#111111] bg-white p-5 text-center font-mono text-[10px] uppercase text-neutral-500">
+                  <div className="border border-dashed border-[#111111] bg-white pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(4rem,calc(env(safe-area-inset-bottom)+3rem))] px-5 text-center font-mono text-[10px] uppercase text-neutral-500">
                     NO RECENT ACTIVITY.
                   </div>
                 ) : (

@@ -239,7 +239,7 @@ export default function AuthModal({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="h-dvh w-full max-w-none overflow-y-auto border-0 bg-[#F4F4F0] p-5 sm:h-auto sm:max-h-[92vh] sm:max-w-lg sm:border-2 sm:border-[#111111] sm:p-8 text-[#111111] sm:shadow-[8px_8px_0px_#111111]"
+        className="h-dvh w-full max-w-none overflow-y-auto border-0 bg-[#F4F4F0] pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(4rem,calc(env(safe-area-inset-bottom)+3rem))] px-5 sm:h-auto sm:max-h-[92vh] sm:max-w-lg sm:border-2 sm:border-[#111111] sm:p-8 text-[#111111] sm:shadow-[8px_8px_0px_#111111]"
       >
         {/* Header */}
         <div className="mb-6 flex items-start justify-between border-b border-[#111111] pb-5">
@@ -707,7 +707,7 @@ export default function AuthModal({
                   IDENTITY SPECIMEN PREVIEW // VERIFY BEFORE COMMITTING
                 </p>
 
-                <div className="border-2 border-[#111111] bg-white p-5">
+                <div className="border-2 border-[#111111] bg-white pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(4rem,calc(env(safe-area-inset-bottom)+3rem))] px-5">
                   <div className="flex items-start gap-4 border-b border-[#111111] pb-4">
                     <div
                       style={{

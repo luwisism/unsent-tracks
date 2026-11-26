@@ -201,7 +201,7 @@ export default function ReaderModal({
       <div
         onClick={(e) => e.stopPropagation()}
         style={{ backgroundColor: note.moodColor, color: fg }}
-        className="h-dvh w-full max-w-none overflow-y-auto border-0 sm:h-auto sm:max-h-[92vh] sm:max-w-xl sm:border-2 sm:border-[#111111] p-5 sm:p-8 sm:shadow-[8px_8px_0px_#111111]"
+        className="h-dvh w-full max-w-none overflow-y-auto border-0 sm:h-auto sm:max-h-[92vh] sm:max-w-xl sm:border-2 sm:border-[#111111] pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(4rem,calc(env(safe-area-inset-bottom)+3rem))] px-5 sm:p-8 sm:shadow-[8px_8px_0px_#111111]"
       >
         {/* Top Header */}
         <div className="mb-5 flex flex-wrap items-start justify-between gap-3 border-b border-current/25 pb-4">
@@ -260,7 +260,7 @@ export default function ReaderModal({
 
         {/* Passcode Gate OR Full Note Body */}
         {isLocked ? (
-          <div className="my-6 border-2 border-current bg-current/5 p-5 sm:p-6">
+          <div className="my-6 border-2 border-current bg-current/5 pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(4rem,calc(env(safe-area-inset-bottom)+3rem))] px-5 sm:p-6">
             <div className="flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-widest">
               <KeyRound className="h-4 w-4" /> ENCRYPTED TRANSMISSION
             </div>
