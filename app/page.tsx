@@ -354,14 +354,20 @@ export default function SwissUnsentPlatform() {
       void document.documentElement.offsetHeight;
     };
 
-    applyThemeColor(nextColor);
+    const rafId = window.requestAnimationFrame(() => {
+      applyThemeColor(nextColor);
+      try {
+        window.scrollBy(0, 0);
+      } catch {}
+    });
 
     return () => {
+      window.cancelAnimationFrame(rafId);
       applyThemeColor(prevTheme);
       document.documentElement.style.backgroundColor = prevHtmlBg;
       document.body.style.backgroundColor = prevBodyBg;
     };
-  }, [activeNote, activeStoryUser, storyIndex, viewedProfile]);
+  }, [activeNote, activeStoryUser, activeStoryUserIdx, storyIndex, viewedProfile]);
 
   const advanceStory = useCallback(() => {
     if (activeStoryUserIdx === null || !stories[activeStoryUserIdx]) return;
