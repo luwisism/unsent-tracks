@@ -810,30 +810,66 @@ export default function SwissUnsentPlatform() {
       <main className="mx-auto max-w-7xl">
         {isLoadingNotes && notes.length === 0 ? (
           <div className={`grid grid-cols-1 border-l ${borderClass} sm:grid-cols-2 lg:grid-cols-3`}>
-            {Array.from({ length: 6 }).map((_, idx) => (
+            {[
+              { code: "CH-01", w1: "w-4/5", w2: "w-1/2", l1: "w-full", l2: "w-10/12", l3: "w-3/5", delay: "0ms" },
+              { code: "CH-02", w1: "w-2/3", w2: "w-3/5", l1: "w-11/12", l2: "w-4/5", l3: "w-1/2", delay: "110ms" },
+              { code: "CH-03", w1: "w-3/4", w2: "w-2/5", l1: "w-full", l2: "w-9/12", l3: "w-2/3", delay: "220ms" },
+              { code: "CH-04", w1: "w-3/5", w2: "w-1/2", l1: "w-10/12", l2: "w-full", l3: "w-4/6", delay: "330ms" },
+              { code: "CH-05", w1: "w-4/5", w2: "w-1/3", l1: "w-9/12", l2: "w-11/12", l3: "w-3/4", delay: "440ms" },
+              { code: "CH-06", w1: "w-2/3", w2: "w-1/2", l1: "w-full", l2: "w-3/4", l3: "w-1/2", delay: "550ms" },
+            ].map((sk) => (
               <div
-                key={idx}
-                className={`animate-pulse border-r border-b ${borderClass} p-5`}
+                key={sk.code}
+                className={`group border-r border-b ${borderClass} p-5 transition-colors`}
               >
-                <div className="mb-4 flex items-center justify-between gap-2">
-                  <div className={`h-3 w-24 ${darkMode ? "bg-white/15" : "bg-black/10"}`} />
-                  <div className={`h-4 w-14 ${darkMode ? "bg-white/15" : "bg-black/10"}`} />
+                <div className="mb-4 flex items-center justify-between gap-2 font-mono text-[10px] uppercase tracking-[0.18em]">
+                  <span className="opacity-70">{sk.code} // SCANNING</span>
+                  <span className="border border-[#E11D2A] px-1.5 py-0.5 text-[#E11D2A]">
+                    SYNC
+                  </span>
                 </div>
+
                 <div className="mb-4 flex items-center gap-3">
-                  <div className={`h-14 w-14 shrink-0 border ${borderClass} ${darkMode ? "bg-white/15" : "bg-black/10"}`} />
+                  <div
+                    className={`sideb-shimmer h-14 w-14 shrink-0 border ${borderClass} ${darkMode ? "bg-white/10" : "bg-black/[0.06]"}`}
+                    style={{ animationDelay: sk.delay }}
+                  />
                   <div className="min-w-0 flex-1 space-y-2">
-                    <div className={`h-3.5 w-3/4 ${darkMode ? "bg-white/15" : "bg-black/10"}`} />
-                    <div className={`h-3 w-1/2 ${darkMode ? "bg-white/10" : "bg-black/10"}`} />
+                    <div
+                      className={`sideb-shimmer h-3.5 ${sk.w1} ${darkMode ? "bg-white/15" : "bg-black/10"}`}
+                      style={{ animationDelay: sk.delay }}
+                    />
+                    <div
+                      className={`sideb-shimmer h-3 ${sk.w2} ${darkMode ? "bg-white/10" : "bg-black/[0.07]"}`}
+                      style={{ animationDelay: sk.delay }}
+                    />
                   </div>
                 </div>
+
                 <div className="mb-5 space-y-2">
-                  <div className={`h-3 w-full ${darkMode ? "bg-white/10" : "bg-black/10"}`} />
-                  <div className={`h-3 w-11/12 ${darkMode ? "bg-white/10" : "bg-black/10"}`} />
-                  <div className={`h-3 w-2/3 ${darkMode ? "bg-white/10" : "bg-black/10"}`} />
+                  <div
+                    className={`sideb-shimmer h-3 ${sk.l1} ${darkMode ? "bg-white/10" : "bg-black/[0.07]"}`}
+                    style={{ animationDelay: sk.delay }}
+                  />
+                  <div
+                    className={`sideb-shimmer h-3 ${sk.l2} ${darkMode ? "bg-white/10" : "bg-black/[0.07]"}`}
+                    style={{ animationDelay: sk.delay }}
+                  />
+                  <div
+                    className={`sideb-shimmer h-3 ${sk.l3} ${darkMode ? "bg-white/10" : "bg-black/[0.07]"}`}
+                    style={{ animationDelay: sk.delay }}
+                  />
                 </div>
+
                 <div className={`flex items-center justify-between border-t ${borderClass} pt-3`}>
-                  <div className={`h-3 w-20 ${darkMode ? "bg-white/10" : "bg-black/10"}`} />
-                  <div className={`h-3 w-16 ${darkMode ? "bg-white/10" : "bg-black/10"}`} />
+                  <div
+                    className={`sideb-shimmer h-3 w-20 ${darkMode ? "bg-white/10" : "bg-black/[0.07]"}`}
+                    style={{ animationDelay: sk.delay }}
+                  />
+                  <div
+                    className={`sideb-shimmer h-3 w-14 ${darkMode ? "bg-white/10" : "bg-black/[0.07]"}`}
+                    style={{ animationDelay: sk.delay }}
+                  />
                 </div>
               </div>
             ))}
