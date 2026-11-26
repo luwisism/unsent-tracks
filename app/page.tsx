@@ -232,6 +232,8 @@ export default function SwissUnsentPlatform() {
     }
   }, []);
 
+
+
   const isNoteLocked = (note: Note) => {
     if (!note.unlockAt || nowTick === 0) return false;
     return new Date(note.unlockAt).getTime() > nowTick;
@@ -621,6 +623,34 @@ export default function SwissUnsentPlatform() {
   const inputBg = darkMode
     ? "border-neutral-700 bg-[#171717] text-[#F4F4F0]"
     : "border-[#111111] bg-white text-[#111111]";
+
+  useEffect(() => {
+    const anyModalOpen = Boolean(
+      activeStoryUser ||
+        activeNote ||
+        isNameVaultOpen ||
+        isMixtapeModalOpen ||
+        isComposerOpen ||
+        viewedProfile ||
+        isAuthModalOpen ||
+        isEditProfileOpen
+    );
+    if (!anyModalOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [
+    activeStoryUser,
+    activeNote,
+    isNameVaultOpen,
+    isMixtapeModalOpen,
+    isComposerOpen,
+    viewedProfile,
+    isAuthModalOpen,
+    isEditProfileOpen,
+  ]);
 
   return (
     <div

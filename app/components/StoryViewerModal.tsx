@@ -51,12 +51,12 @@ export default function StoryViewerModal({
   return (
     <div
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-stretch sm:items-center justify-center bg-black/90 p-0 sm:p-4 backdrop-blur-sm"
     >
       <div
         onClick={(e) => e.stopPropagation()}
         style={{ backgroundColor: sNote.moodColor, color: fg }}
-        className="relative flex h-[86vh] max-h-[760px] w-full max-w-md flex-col justify-between border-2 border-white/30 p-6 shadow-2xl select-none"
+        className="relative flex h-dvh w-full max-w-none flex-col justify-between overflow-y-auto border-0 sm:h-[86vh] sm:max-h-[760px] sm:max-w-md sm:border-2 sm:border-white/30 p-6 sm:shadow-2xl select-none"
       >
         <div>
           <div className="mb-4 flex gap-1.5">

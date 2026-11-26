@@ -196,12 +196,12 @@ export default function ReaderModal({
   return (
     <div
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/75 p-0 sm:items-center sm:p-4 backdrop-blur-[2px]"
+      className="fixed inset-0 z-50 flex items-stretch sm:items-center justify-center bg-black/75 p-0 sm:p-4 backdrop-blur-[2px]"
     >
       <div
         onClick={(e) => e.stopPropagation()}
         style={{ backgroundColor: note.moodColor, color: fg }}
-        className="max-h-[92vh] w-full max-w-xl overflow-y-auto border-t-2 sm:border-2 border-[#111111] p-5 sm:p-8 shadow-[8px_8px_0px_#111111]"
+        className="h-dvh w-full max-w-none overflow-y-auto border-0 sm:h-auto sm:max-h-[92vh] sm:max-w-xl sm:border-2 sm:border-[#111111] p-5 sm:p-8 sm:shadow-[8px_8px_0px_#111111]"
       >
         {/* Top Header */}
         <div className="mb-5 flex flex-wrap items-start justify-between gap-3 border-b border-current/25 pb-4">

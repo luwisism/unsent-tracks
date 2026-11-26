@@ -207,11 +207,11 @@ export default function ProfileModal({
   return (
     <div
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/75 p-0 sm:p-4 backdrop-blur-[2px]"
+      className="fixed inset-0 z-50 flex items-stretch sm:items-center justify-center bg-black/75 p-0 sm:p-4 backdrop-blur-[2px]"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden border-t-2 sm:border-2 border-[#111111] bg-[#F4F4F0] text-[#111111] shadow-[10px_10px_0px_#111111] md:grid md:grid-cols-10"
+        className="flex h-dvh w-full max-w-none flex-col overflow-y-auto md:overflow-hidden border-0 sm:h-auto sm:max-h-[92vh] sm:max-w-5xl sm:border-2 sm:border-[#111111] bg-[#F4F4F0] text-[#111111] sm:shadow-[10px_10px_0px_#111111] md:grid md:grid-cols-10"
       >
         {/* LEFT 70% (7 COLS): USER IDENTITY IN CHOSEN COLOR + ANTHEM + PIN */}
         <div

@@ -34,11 +34,11 @@ export default function NameVaultModal({
   return (
     <div
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-[2px]"
+      className="fixed inset-0 z-50 flex items-stretch sm:items-center justify-center bg-black/80 p-0 sm:p-4 backdrop-blur-[2px]"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="max-h-[90vh] w-full max-w-md overflow-y-auto border-2 border-[#111111] bg-[#F4F4F0] p-7 text-[#111111] shadow-[8px_8px_0px_#E11D2A]"
+        className="h-dvh w-full max-w-none overflow-y-auto border-0 bg-[#F4F4F0] p-5 sm:h-auto sm:max-h-[90vh] sm:max-w-md sm:border-2 sm:border-[#111111] sm:p-7 text-[#111111] sm:shadow-[8px_8px_0px_#E11D2A]"
       >
         <div className="mb-5 flex items-center justify-between border-b border-dashed border-[#111111] pb-4">
           <div>
