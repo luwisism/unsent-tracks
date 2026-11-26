@@ -62,6 +62,38 @@ function loadImage(src: string): Promise<HTMLImageElement | null> {
   });
 }
 
+function triggerCanvasPngDownload(canvas: HTMLCanvasElement, filename: string) {
+  const fallbackDataUrl = () => {
+    const link = document.createElement("a");
+    link.download = filename;
+    link.href = canvas.toDataURL("image/png");
+    link.rel = "noopener";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  };
+
+  if (typeof canvas.toBlob === "function") {
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        fallbackDataUrl();
+        return;
+      }
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.download = filename;
+      link.href = blobUrl;
+      link.rel = "noopener";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(blobUrl), 4000);
+    }, "image/png");
+  } else {
+    fallbackDataUrl();
+  }
+}
+
 export async function downloadSwissPoster(note: Note) {
   const canvas = document.createElement("canvas");
   // True 9:16 vertical print ratio (1080 x 1920)
@@ -204,10 +236,7 @@ export async function downloadSwissPoster(note: Note) {
     ctx.fillRect(innerLeft + i * 21, 1775, barWidth, 48);
   }
 
-  const link = document.createElement("a");
-  link.download = `side-b-${String(note.id).padStart(3, "0")}.png`;
-  link.href = canvas.toDataURL("image/png");
-  link.click();
+  triggerCanvasPngDownload(canvas, `side-b-${String(note.id).padStart(3, "0")}.png`);
 }
 
 export function formatIndex(id: number): string {
@@ -429,8 +458,5 @@ export async function downloadSwissProfilePoster(
     ctx.fillRect(innerLeft + i * 21, 1785, barWidth, 44);
   }
 
-  const link = document.createElement("a");
-  link.download = `side-b-profile-${profile.username}.png`;
-  link.href = canvas.toDataURL("image/png");
-  link.click();
+  triggerCanvasPngDownload(canvas, `side-b-profile-${profile.username}.png`);
 }
