@@ -351,6 +351,7 @@ export default function SwissUnsentPlatform() {
       document.head.appendChild(freshMeta);
       document.documentElement.style.backgroundColor = color;
       document.body.style.backgroundColor = color;
+      void document.documentElement.offsetHeight;
     };
 
     applyThemeColor(nextColor);
