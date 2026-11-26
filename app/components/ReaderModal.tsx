@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import {
   Play,
   Pause,
@@ -28,8 +28,6 @@ interface ReaderModalProps {
   onSendSignal: (noteId: number, type: string) => void;
   onPlayPreview: (url: string | null, trackId: string, start: number, end: number) => void;
   onSeekAudio: (pct: number) => void;
-  onPrevNote?: () => void;
-  onNextNote?: () => void;
   onNoteUnlocked: (noteId: number, message: string, lyricExcerpt: string | null) => void;
   onReplyAdded: (noteId: number, reply: unknown) => void;
   onClose: () => void;
@@ -59,89 +57,11 @@ export default function ReaderModal({
   onSendSignal,
   onPlayPreview,
   onSeekAudio,
-  onPrevNote,
-  onNextNote,
   onNoteUnlocked,
   onReplyAdded,
   onClose,
 }: ReaderModalProps) {
   const [copiedLink, setCopiedLink] = useState(false);
-
-  // Mobile-only horizontal swipe state & slide transition
-  const [dragX, setDragX] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const [enterDir, setEnterDir] = useState<"left" | "right" | null>(null);
-  const touchStartRef = useRef<{ x: number; y: number; lockedAxis: "x" | "y" | null }>({
-    x: 0,
-    y: 0,
-    lockedAxis: null,
-  });
-
-  useEffect(() => {
-    setDragX(0);
-    setIsDragging(false);
-    if (!enterDir) return;
-    const t = window.setTimeout(() => setEnterDir(null), 220);
-    return () => window.clearTimeout(t);
-  }, [note.id, enterDir]);
-
-  const isMobileViewport = () =>
-    typeof window !== "undefined" && window.matchMedia("(max-width: 639px)").matches;
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (!isMobileViewport() || e.touches.length !== 1) return;
-    touchStartRef.current = {
-      x: e.touches[0].clientX,
-      y: e.touches[0].clientY,
-      lockedAxis: null,
-    };
-    setIsDragging(true);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isMobileViewport() || !isDragging || e.touches.length !== 1) return;
-    const dx = e.touches[0].clientX - touchStartRef.current.x;
-    const dy = e.touches[0].clientY - touchStartRef.current.y;
-
-    if (!touchStartRef.current.lockedAxis) {
-      if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
-        touchStartRef.current.lockedAxis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
-      }
-    }
-
-    if (touchStartRef.current.lockedAxis === "x") {
-      setDragX(dx * 0.85);
-    }
-  };
-
-  const handleTouchEnd = () => {
-    if (!isMobileViewport() || !isDragging) {
-      setIsDragging(false);
-      setDragX(0);
-      return;
-    }
-
-    const threshold = 72;
-    const finalDx = dragX;
-    setIsDragging(false);
-    touchStartRef.current.lockedAxis = null;
-
-    if (finalDx <= -threshold && onNextNote) {
-      setDragX(-window.innerWidth * 0.65);
-      setEnterDir("right");
-      window.setTimeout(() => {
-        onNextNote();
-      }, 130);
-    } else if (finalDx >= threshold && onPrevNote) {
-      setDragX(window.innerWidth * 0.65);
-      setEnterDir("left");
-      window.setTimeout(() => {
-        onPrevNote();
-      }, 130);
-    } else {
-      setDragX(0);
-    }
-  };
 
   // Passcode Unlock State
   const [pinInput, setPinInput] = useState("");
@@ -156,17 +76,6 @@ export default function ReaderModal({
   const [selectedReplyTrack, setSelectedReplyTrack] = useState<Track | null>(null);
   const [replyLyric, setReplyLyric] = useState("");
   const [submittingReply, setSubmittingReply] = useState(false);
-
-
-  const mobileTransform = isDragging
-    ? `translate3d(${dragX}px, 0, 0)`
-    : dragX !== 0
-    ? `translate3d(${dragX}px, 0, 0)`
-    : enterDir === "right"
-    ? "translate3d(24px, 0, 0)"
-    : enterDir === "left"
-    ? "translate3d(-24px, 0, 0)"
-    : "translate3d(0, 0, 0)";
 
   const isLocked =
     note.isPasscodeProtected && note.message.startsWith("[ENCRYPTED TRANSMISSION");
@@ -291,10 +200,7 @@ export default function ReaderModal({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        style={{ backgroundColor: note.moodColor, color: fg , transform: isMobileViewport() ? mobileTransform : undefined, transition: isDragging ? "none" : "transform 220ms cubic-bezier(0.22, 1, 0.36, 1), opacity 220ms ease", opacity: isMobileViewport() && Math.abs(dragX) > 20 ? Math.max(0.55, 1 - Math.abs(dragX) / 500) : 1}}
+        style={{ backgroundColor: note.moodColor, color: fg }}
         className="h-dvh w-full max-w-none overflow-y-auto border-0 sm:h-auto sm:max-h-[92vh] sm:max-w-xl sm:border-2 sm:border-[#111111] pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(4rem,calc(env(safe-area-inset-bottom)+3rem))] px-5 sm:p-8 sm:shadow-[8px_8px_0px_#111111]"
       >
         {/* Top Header */}
