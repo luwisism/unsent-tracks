@@ -51,13 +51,13 @@ export default function StoryViewerModal({
   return (
     <div
       onClick={onClose}
-      style={{ backgroundColor: sNote.moodColor }}
-      className="fixed inset-0 z-50 flex min-h-dvh items-stretch sm:items-center justify-center sm:!bg-black/90 p-0 sm:p-4 sm:backdrop-blur-sm"
+      style={{ backgroundColor: "#111111" }}
+      className="fixed inset-0 z-50 flex min-h-dvh items-stretch sm:items-center justify-center bg-[#111111] sm:!bg-black/90 p-2 sm:p-4 sm:backdrop-blur-sm"
     >
       <div
         onClick={(e) => e.stopPropagation()}
         style={{ backgroundColor: sNote.moodColor, color: fg }}
-        className="relative flex min-h-dvh w-full max-w-none flex-col justify-between border-0 sm:min-h-0 sm:h-[86vh] sm:max-h-[760px] sm:max-w-md sm:border-2 sm:border-white/30 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(4.5rem,calc(env(safe-area-inset-bottom)+3.5rem))] px-6 sm:shadow-2xl select-none"
+        className="relative flex flex-1 w-full max-w-none flex-col justify-between overflow-hidden rounded-2xl border-0 sm:flex-none sm:rounded-none sm:min-h-0 sm:h-[86vh] sm:max-h-[760px] sm:max-w-md sm:border-2 sm:border-white/30 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(4.5rem,calc(env(safe-area-inset-bottom)+3.5rem))] px-6 sm:shadow-2xl select-none"
       >
         <div>
           <div className="mb-4 flex gap-1.5">
