@@ -32,6 +32,7 @@ export default function SwissUnsentPlatform() {
   const [listenerCount, setListenerCount] = useState(1);
 
   const [notes, setNotes] = useState<Note[]>([]);
+  const [isLoadingNotes, setIsLoadingNotes] = useState(true);
   const [stories, setStories] = useState<StoryUser[]>([]);
   const [availableColors, setAvailableColors] = useState<string[]>([]);
   const [availableTags, setAvailableTags] = useState<string[]>([]);
@@ -167,19 +168,24 @@ export default function SwissUnsentPlatform() {
   };
 
   const fetchArchive = useCallback(async () => {
-    const params = new URLSearchParams();
-    if (searchQuery) params.set("search", searchQuery);
-    if (filterColor) params.set("color", filterColor);
-    if (filterTag) params.set("tag", filterTag);
-    if (unlockedNoteIds.length > 0) params.set("unlocked", unlockedNoteIds.join(","));
+    setIsLoadingNotes(true);
+    try {
+      const params = new URLSearchParams();
+      if (searchQuery) params.set("search", searchQuery);
+      if (filterColor) params.set("color", filterColor);
+      if (filterTag) params.set("tag", filterTag);
+      if (unlockedNoteIds.length > 0) params.set("unlocked", unlockedNoteIds.join(","));
 
-    const res = await fetch(`/api/notes?${params.toString()}`);
-    if (!res.ok) return;
-    const data = await res.json();
-    if (data.notes) setNotes(data.notes);
-    if (data.stories) setStories(data.stories);
-    if (data.availableColors) setAvailableColors(data.availableColors);
-    if (data.availableTags) setAvailableTags(data.availableTags);
+      const res = await fetch(`/api/notes?${params.toString()}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.notes) setNotes(data.notes);
+      if (data.stories) setStories(data.stories);
+      if (data.availableColors) setAvailableColors(data.availableColors);
+      if (data.availableTags) setAvailableTags(data.availableTags);
+    } finally {
+      setIsLoadingNotes(false);
+    }
   }, [searchQuery, filterColor, filterTag, unlockedNoteIds]);
 
   const refreshFollowing = useCallback(async () => {
@@ -802,7 +808,37 @@ export default function SwissUnsentPlatform() {
 
       {/* Modular Archive Grid */}
       <main className="mx-auto max-w-7xl">
-        {notes.length === 0 ? (
+        {isLoadingNotes && notes.length === 0 ? (
+          <div className={`grid grid-cols-1 border-l ${borderClass} sm:grid-cols-2 lg:grid-cols-3`}>
+            {Array.from({ length: 6 }).map((_, idx) => (
+              <div
+                key={idx}
+                className={`animate-pulse border-r border-b ${borderClass} p-5`}
+              >
+                <div className="mb-4 flex items-center justify-between gap-2">
+                  <div className={`h-3 w-24 ${darkMode ? "bg-white/15" : "bg-black/10"}`} />
+                  <div className={`h-4 w-14 ${darkMode ? "bg-white/15" : "bg-black/10"}`} />
+                </div>
+                <div className="mb-4 flex items-center gap-3">
+                  <div className={`h-14 w-14 shrink-0 border ${borderClass} ${darkMode ? "bg-white/15" : "bg-black/10"}`} />
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <div className={`h-3.5 w-3/4 ${darkMode ? "bg-white/15" : "bg-black/10"}`} />
+                    <div className={`h-3 w-1/2 ${darkMode ? "bg-white/10" : "bg-black/10"}`} />
+                  </div>
+                </div>
+                <div className="mb-5 space-y-2">
+                  <div className={`h-3 w-full ${darkMode ? "bg-white/10" : "bg-black/10"}`} />
+                  <div className={`h-3 w-11/12 ${darkMode ? "bg-white/10" : "bg-black/10"}`} />
+                  <div className={`h-3 w-2/3 ${darkMode ? "bg-white/10" : "bg-black/10"}`} />
+                </div>
+                <div className={`flex items-center justify-between border-t ${borderClass} pt-3`}>
+                  <div className={`h-3 w-20 ${darkMode ? "bg-white/10" : "bg-black/10"}`} />
+                  <div className={`h-3 w-16 ${darkMode ? "bg-white/10" : "bg-black/10"}`} />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : notes.length === 0 ? (
           <div className={`border-b ${borderClass} px-6 py-24 text-center`}>
             <p className="font-mono text-xs uppercase tracking-[0.2em] opacity-60">
               NO ARCHIVE ENTRIES MATCH CURRENT FILTER
