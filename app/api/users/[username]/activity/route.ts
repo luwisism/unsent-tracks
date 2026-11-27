@@ -78,6 +78,7 @@ export async function GET(
       });
 
     return NextResponse.json({
+      badge: user.badge,
       followersCount: user.followers.length,
       followingCount: user.following.length,
       isFollowing: viewerId ? user.followers.some((f) => f.followerId === viewerId) : false,

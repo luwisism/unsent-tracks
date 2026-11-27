@@ -1,5 +1,7 @@
 "use client";
 
+import MemberBadge from "./MemberBadge";
+
 import { useEffect, useState } from "react";
 import {
   Play,
@@ -103,6 +105,7 @@ export default function ProfileModal({
     profile.pinnedNoteId ?? null
   );
   const [pinBusy, setPinBusy] = useState(false);
+  const [liveBadge, setLiveBadge] = useState<string | null | undefined>(profile.badge);
   const [exportingPoster, setExportingPoster] = useState(false);
 
   const isOwnProfile = currentUser?.username === profile.username;
@@ -112,7 +115,8 @@ export default function ProfileModal({
 
   useEffect(() => {
     setPinnedNoteId(profile.pinnedNoteId ?? null);
-  }, [profile.pinnedNoteId, profile.username]);
+    setLiveBadge(profile.badge);
+  }, [profile.pinnedNoteId, profile.badge, profile.username]);
 
   useEffect(() => {
     let mounted = true;
@@ -122,6 +126,7 @@ export default function ProfileModal({
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (!mounted || !data) return;
+        if (data.badge !== undefined) setLiveBadge(data.badge);
         setFollowersCount(data.followersCount ?? 0);
         setFollowingCount(data.followingCount ?? 0);
         setIsFollowing(Boolean(data.isFollowing));
@@ -298,9 +303,12 @@ export default function ProfileModal({
                   ))}
                 </div>
 
-                <h2 className="mt-2 break-all text-2xl sm:text-4xl font-bold tracking-tight">
-                  @{profile.username}
-                </h2>
+                <div className="mt-2 flex flex-wrap items-center gap-2.5">
+                  <h2 className="break-all text-2xl sm:text-4xl font-bold tracking-tight">
+                    @{profile.username}
+                  </h2>
+                  <MemberBadge badge={liveBadge ?? profile.badge} lightSurface={isLightSurface} />
+                </div>
 
                 <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[10px] uppercase opacity-80">
                   {profile.coordinates && (
