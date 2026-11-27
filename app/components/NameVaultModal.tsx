@@ -64,7 +64,7 @@ export default function NameVaultModal({
           <input
             type="text"
             required
-            placeholder="e.g. Rhu, K., or A."
+            placeholder="First name, nickname, or initial"
             value={queryName}
             onChange={(e) => {
               setQueryName(e.target.value);
