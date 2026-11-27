@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
+import { SWISS_EASE, TACTILE_SPRING } from "../utils/motion";
 import {
   Play,
   Pause,
@@ -426,16 +428,28 @@ export default function ReaderModal({
             <p className="font-mono text-[10px] font-bold uppercase tracking-widest opacity-75">
               REPLIES ({note.replies?.length || 0})
             </p>
-            <button
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.95 }}
+              transition={TACTILE_SPRING}
               onClick={() => setShowReplyBox(!showReplyBox)}
               className="flex items-center gap-1 border border-current px-2.5 py-1 font-mono text-[10px] font-bold uppercase hover:bg-current/10"
             >
               <MessageSquare className="h-3 w-3" /> {showReplyBox ? "Cancel" : "Add Reply"}
-            </button>
+            </motion.button>
           </div>
 
-          {showReplyBox && (
-            <div className="mt-3 space-y-3 border border-[#111111] bg-white p-3.5 text-[#111111]">
+          <AnimatePresence initial={false}>
+            {showReplyBox && (
+              <motion.div
+                key="reply-collapse"
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={SWISS_EASE}
+                className="overflow-hidden"
+              >
+                <div className="mt-3 space-y-3 border border-[#111111] bg-white p-3.5 text-[#111111]">
               {/* 3-Way Mode Selector */}
               <div className="grid grid-cols-3 border border-[#111111] font-mono text-[10px] font-bold uppercase">
                 {(
@@ -550,8 +564,10 @@ export default function ReaderModal({
                   ? "TRANSMIT SONG REPLY"
                   : "TRANSMIT SONG + TEXT"}
               </button>
-            </div>
-          )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {note.replies && note.replies.length > 0 && (
             <div className="mt-3 space-y-2">
