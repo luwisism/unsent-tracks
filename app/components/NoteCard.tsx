@@ -1,6 +1,8 @@
 "use client";
 
+import { motion } from "motion/react";
 import { Play, Pause, Lock, Disc, Flame, KeyRound } from "lucide-react";
+import { TACTILE_SPRING } from "../utils/motion";
 import { Note } from "../types/archive";
 import { formatCountdown, formatIndex, getContrastText, getMonogram } from "../utils/poster";
 
@@ -39,8 +41,13 @@ export default function NoteCard({
       : null;
 
   return (
-    <article
+    <motion.article
       onClick={onCardClick}
+      initial={{ opacity: 0, y: 12 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: "some" }}
+      whileTap={{ scale: 0.985 }}
+      transition={TACTILE_SPRING}
       style={{ backgroundColor: note.moodColor, color: textColor }}
       className={`group flex cursor-pointer flex-col justify-between border-b border-r ${gridBorder} p-6 transition-opacity hover:opacity-95`}
     >
@@ -56,8 +63,10 @@ export default function NoteCard({
 
         <div className="mb-4 flex items-center justify-between gap-2">
           {note.user ? (
-            <button
+            <motion.button
               type="button"
+              whileTap={{ scale: 0.95 }}
+              transition={TACTILE_SPRING}
               onClick={(e) => {
                 e.stopPropagation();
                 onOpenProfile(note.user!.username);
@@ -78,7 +87,7 @@ export default function NoteCard({
                 {getMonogram(note.user.username)}
               </span>
               @{note.user.username}
-            </button>
+            </motion.button>
           ) : (
             <span
               className={`inline-block border px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest opacity-70 ${
@@ -205,6 +214,6 @@ export default function NoteCard({
           )}
         </div>
       </div>
-    </article>
+    </motion.article>
   );
 }
