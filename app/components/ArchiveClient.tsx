@@ -66,6 +66,19 @@ export default function SwissUnsentPlatform() {
   const [isMixtapeModalOpen, setIsMixtapeModalOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const [liveToast, setLiveToast] = useState<{
+    id: number;
+    actorHandle: string;
+    message: string;
+    noteId?: number | null;
+  } | null>(null);
+  const lastSeenNotifIdRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!liveToast) return;
+    const t = window.setTimeout(() => setLiveToast(null), 4000);
+    return () => window.clearTimeout(t);
+  }, [liveToast]);
   const [activeNote, setActiveNote] = useState<Note | null>(null);
   const [viewedProfile, setViewedProfile] = useState<UserProfile | null>(null);
 
@@ -1131,6 +1144,44 @@ export default function SwissUnsentPlatform() {
       )}
 
       <ManifestoDispatch currentUser={currentUser} />
+
+      {liveToast && (
+        <div
+          onClick={() => {
+            const targetNoteId = liveToast.noteId;
+            setLiveToast(null);
+            if (targetNoteId) {
+              const found = notes.find((n) => n.id === targetNoteId);
+              if (found) {
+                setActiveNote(found);
+                return;
+              }
+            }
+            setIsNotificationsOpen(true);
+          }}
+          role="status"
+          className="fixed bottom-4 right-4 left-4 sm:left-auto sm:w-80 z-50 cursor-pointer border-2 border-[#111111] bg-[#F4F4F0] p-3 text-[#111111] shadow-[4px_4px_0px_#111111] transition-all hover:bg-white"
+        >
+          <div className="flex items-center justify-between gap-2">
+            <span className="bg-[#E11D2A] px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-widest text-white">
+              NEW SIGNAL
+            </span>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setLiveToast(null);
+              }}
+              className="font-mono text-[10px] font-bold uppercase opacity-60 hover:opacity-100"
+            >
+              ✕
+            </button>
+          </div>
+          <p className="mt-1.5 font-mono text-xs leading-snug">
+            <span className="font-bold">@{liveToast.actorHandle}</span> {liveToast.message}
+          </p>
+        </div>
+      )}
 
       {isNotificationsOpen && (
         <NotificationModal

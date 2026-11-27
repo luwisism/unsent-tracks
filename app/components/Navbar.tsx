@@ -185,8 +185,24 @@ export default function Navbar({
           </button>
         </div>
 
-        {/* Mobile Compact Actions (+ Post & Collapsible Menu Toggle) */}
+        {/* Mobile Compact Actions (Bell, + Post & Collapsible Menu Toggle) */}
         <div className="flex lg:hidden shrink-0 items-center gap-1.5">
+          {currentUser && onOpenNotifications && (
+            <button
+              type="button"
+              onClick={onOpenNotifications}
+              aria-label="Signal Alerts"
+              title="Signal Alerts"
+              className={`relative ${iconOnlyBtn}`}
+            >
+              <Bell className="h-3.5 w-3.5" />
+              {unreadNotifications > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center bg-[#E11D2A] px-1 font-mono text-[9px] font-bold text-white">
+                  {unreadNotifications > 9 ? "9+" : unreadNotifications}
+                </span>
+              )}
+            </button>
+          )}
           <button
             onClick={onOpenComposer}
             className="inline-flex h-8 items-center justify-center gap-1 border border-[#111111] bg-[#111111] px-2.5 text-[11px] font-bold uppercase tracking-wider text-white active:bg-[#E11D2A]"
