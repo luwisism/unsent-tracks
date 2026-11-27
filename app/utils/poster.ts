@@ -94,6 +94,163 @@ function triggerCanvasPngDownload(canvas: HTMLCanvasElement, filename: string) {
   }
 }
 
+export async function renderSwissPosterFile(note: Note): Promise<File | null> {
+  const canvas = document.createElement("canvas");
+  // True 9:16 vertical print ratio (1080 x 1920)
+  canvas.width = 1080;
+  canvas.height = 1920;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+
+  const fg = getContrastText(note.moodColor);
+  const innerLeft = 96;
+  const innerRight = 984;
+  const safeWidth = innerRight - innerLeft; // 888px strict inner text width
+
+  // 1. Background Surface
+  ctx.fillStyle = note.moodColor || "#FFFFFF";
+  ctx.fillRect(0, 0, 1080, 1920);
+
+  // 2. Outer Swiss Frame & Header Rule
+  ctx.strokeStyle = fg;
+  ctx.lineWidth = 6;
+  ctx.strokeRect(48, 48, 984, 1824);
+
+  ctx.beginPath();
+  ctx.moveTo(48, 176);
+  ctx.lineTo(1032, 176);
+  ctx.stroke();
+
+  // 3. Top Index Header
+  ctx.fillStyle = fg;
+  ctx.font = "bold 24px monospace";
+  ctx.fillText("SIDE B // 026 // ARCHIVE PRINT", innerLeft, 124);
+  const noLabel = `NO.${String(note.id).padStart(3, "0")}`;
+  const noWidth = ctx.measureText(noLabel).width;
+  ctx.fillText(noLabel, innerRight - noWidth, 124);
+
+  // 4. Recipient (Wrapped safely inside safeWidth)
+  let cursorY = 268;
+  ctx.font = "bold 62px Helvetica, Arial, sans-serif";
+  const recipientLines = wrapLines(
+    ctx,
+    `TO: ${note.recipient.toUpperCase()}`,
+    safeWidth,
+    2
+  );
+  for (const rLine of recipientLines) {
+    ctx.fillText(rLine, innerLeft, cursorY);
+    cursorY += 72;
+  }
+
+  // 5. Author Handle & Coordinates
+  cursorY += 4;
+  ctx.font = "bold 22px monospace";
+  const badgeSuffix = note.user?.badge ? `  //  ◉ ${note.user.badge.trim().toUpperCase()}` : "";
+  const authorLabel = note.user
+    ? `BY @${note.user.username.toUpperCase()}${badgeSuffix}`
+    : "BY ANONYMOUS";
+  const authorLines = wrapLines(ctx, authorLabel, safeWidth, 1);
+  ctx.fillText(authorLines[0] || authorLabel, innerLeft, cursorY);
+  cursorY += 76;
+
+  // 6. Main Confession Body (Dynamic sizing based on length so it fits 9:16 cleanly)
+  const msgText = `“${note.message}”`;
+  const isLongMsg = msgText.length > 260;
+  const msgFontSize = isLongMsg ? 40 : 50;
+  const msgLineHeight = isLongMsg ? 56 : 68;
+  const maxMsgLines = note.lyricExcerpt ? 9 : 13;
+
+  ctx.font = `500 ${msgFontSize}px Helvetica, Arial, sans-serif`;
+  const bodyLines = wrapLines(ctx, msgText, safeWidth, maxMsgLines);
+  for (const bLine of bodyLines) {
+    ctx.fillText(bLine, innerLeft, cursorY);
+    cursorY += msgLineHeight;
+  }
+
+  // 7. Pinned Lyric Excerpt (Properly word-wrapped inside safeWidth!)
+  const soundtrackBoxTop = 1480;
+  if (note.lyricExcerpt && cursorY < soundtrackBoxTop - 90) {
+    cursorY += 28;
+
+    // Subtle hairline divider above lyrics
+    ctx.save();
+    ctx.globalAlpha = 0.35;
+    ctx.beginPath();
+    ctx.moveTo(innerLeft, cursorY);
+    ctx.lineTo(innerRight, cursorY);
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.restore();
+
+    cursorY += 44;
+    ctx.font = "italic 28px monospace";
+
+    const rawLyricLines = note.lyricExcerpt.split("\n").filter((l) => l.trim());
+    for (const rawLine of rawLyricLines) {
+      if (cursorY > soundtrackBoxTop - 45) break;
+      const wrappedLyric = wrapLines(ctx, `♪ "${rawLine.trim()}"`, safeWidth, 2);
+      for (const wLine of wrappedLyric) {
+        if (cursorY > soundtrackBoxTop - 45) break;
+        ctx.fillText(wLine, innerLeft, cursorY);
+        cursorY += 40;
+      }
+      cursorY += 8;
+    }
+  }
+
+  // 8. Bottom Soundtrack Specimen Block (Fixed anchor at bottom of 9:16 frame)
+  const boxHeight = 240;
+  ctx.fillStyle = fg;
+  ctx.fillRect(innerLeft, soundtrackBoxTop, safeWidth, boxHeight);
+
+  const inverseBg = note.moodColor || "#FFFFFF";
+  const artImg = await loadImage(note.albumArt);
+  let textStartX = innerLeft + 36;
+
+  if (artImg) {
+    const artSize = 168;
+    const artX = innerLeft + 36;
+    const artY = soundtrackBoxTop + 36;
+    ctx.drawImage(artImg, artX, artY, artSize, artSize);
+    ctx.strokeStyle = inverseBg;
+    ctx.lineWidth = 3;
+    ctx.strokeRect(artX, artY, artSize, artSize);
+    textStartX = artX + artSize + 32;
+  }
+
+  const cardTextMaxWidth = innerRight - textStartX - 32;
+  ctx.fillStyle = inverseBg;
+  ctx.font = "bold 20px monospace";
+  ctx.fillText("ATTACHED SOUNDTRACK // 30S ARCHIVE", textStartX, soundtrackBoxTop + 68);
+
+  ctx.font = "bold 36px Helvetica, Arial, sans-serif";
+  const trackLines = wrapLines(ctx, note.trackName, cardTextMaxWidth, 1);
+  ctx.fillText(trackLines[0] || note.trackName, textStartX, soundtrackBoxTop + 124);
+
+  ctx.font = "28px Helvetica, Arial, sans-serif";
+  const artistLines = wrapLines(ctx, note.artistName, cardTextMaxWidth, 1);
+  ctx.fillText(artistLines[0] || note.artistName, textStartX, soundtrackBoxTop + 168);
+
+  // 9. Swiss Barcode Footer
+  ctx.fillStyle = fg;
+  for (let i = 0; i < 42; i++) {
+    const barWidth = i % 3 === 0 ? 8 : 3;
+    ctx.fillRect(innerLeft + i * 21, 1775, barWidth, 48);
+  }
+
+  const filename = `side-b-${String(note.id).padStart(3, "0")}.png`;
+  if (typeof canvas.toBlob === "function") {
+    return await new Promise<File | null>((resolve) => {
+      canvas.toBlob((blob) => {
+        if (!blob) return resolve(null);
+        resolve(new File([blob], filename, { type: "image/png" }));
+      }, "image/png");
+    });
+  }
+  return null;
+}
+
 export async function downloadSwissPoster(note: Note) {
   const canvas = document.createElement("canvas");
   // True 9:16 vertical print ratio (1080 x 1920)

@@ -19,7 +19,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { Note, SIGNAL_TYPES, Track, UserProfile } from "../types/archive";
-import { downloadSwissPoster, getContrastText } from "../utils/poster";
+import { downloadSwissPoster, getContrastText, renderSwissPosterFile } from "../utils/poster";
 
 interface ReaderModalProps {
   note: Note;
@@ -66,6 +66,9 @@ export default function ReaderModal({
   onClose,
 }: ReaderModalProps) {
   const [copiedLink, setCopiedLink] = useState(false);
+  const [showShareMenu, setShowShareMenu] = useState(false);
+  const [sharingStory, setSharingStory] = useState(false);
+  const [shareStatus, setShareStatus] = useState<string | null>(null);
 
   // Passcode Unlock State
   const [pinInput, setPinInput] = useState("");
@@ -148,9 +151,7 @@ export default function ReaderModal({
     setSubmittingReply(false);
   };
 
-  const handleCopyShareLink = async () => {
-    const url = `${window.location.origin}/?note=${note.id}`;
-
+  const copyUrlToClipboard = async (url: string) => {
     try {
       if (navigator.clipboard && window.isSecureContext) {
         await navigator.clipboard.writeText(url);
@@ -159,18 +160,74 @@ export default function ReaderModal({
         textArea.value = url;
         textArea.style.position = "fixed";
         textArea.style.left = "-9999px";
-        textArea.style.top = "0";
         document.body.appendChild(textArea);
-        textArea.focus();
         textArea.select();
         document.execCommand("copy");
         document.body.removeChild(textArea);
       }
-
-      setCopiedLink(true);
-      setTimeout(() => setCopiedLink(false), 2000);
     } catch (err) {
       console.error("Failed to copy share link:", err);
+    }
+  };
+
+  const handleNativeLinkShare = async () => {
+    const url = `${window.location.origin}/?note=${note.id}`;
+    const title = `TO: ${note.recipient} — SIDE B #${String(note.id).padStart(3, "0")}`;
+    if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+      try {
+        await navigator.share({ title, url });
+        setShowShareMenu(false);
+        return;
+      } catch (err) {
+        if ((err as { name?: string })?.name === "AbortError") return;
+      }
+    }
+    await copyUrlToClipboard(url);
+    setCopiedLink(true);
+    setShareStatus("Link copied");
+    setTimeout(() => {
+      setCopiedLink(false);
+      setShareStatus(null);
+      setShowShareMenu(false);
+    }, 1800);
+  };
+
+  const handleShareStoryCard = async () => {
+    if (isLocked) {
+      await handleNativeLinkShare();
+      return;
+    }
+    setSharingStory(true);
+    setShareStatus("Rendering 9:16 card...");
+    const url = `${window.location.origin}/?note=${note.id}`;
+    await copyUrlToClipboard(url);
+
+    try {
+      const file = await renderSwissPosterFile(note);
+      const nav = navigator as Navigator & {
+        canShare?: (data?: ShareData) => boolean;
+      };
+      if (
+        file &&
+        typeof nav.share === "function" &&
+        (!nav.canShare || nav.canShare({ files: [file] }))
+      ) {
+        setShareStatus("Link copied for IG Link Sticker");
+        await nav.share({ files: [file] });
+        setShowShareMenu(false);
+      } else {
+        await downloadSwissPoster(note);
+        setShareStatus("Link copied + 9:16 PNG saved");
+        setTimeout(() => setShowShareMenu(false), 1800);
+      }
+    } catch (err) {
+      if ((err as { name?: string })?.name !== "AbortError") {
+        await downloadSwissPoster(note);
+        setShareStatus("9:16 PNG saved");
+      }
+    } finally {
+      setSharingStory(false);
+      setTimeout(() => setShareStatus(null), 2500);
     }
   };
 
@@ -232,14 +289,82 @@ export default function ReaderModal({
           </div>
 
           <div className="flex shrink-0 items-center gap-1.5">
-            <button
-              onClick={handleCopyShareLink}
-              title="Copy Permalink"
-              className="flex items-center gap-1 border border-current px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider transition hover:bg-current/10"
-            >
-              {copiedLink ? <Check className="h-3.5 w-3.5" /> : <Share2 className="h-3.5 w-3.5" />}
-              <span className="hidden sm:inline">{copiedLink ? "Copied" : "Share"}</span>
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setShowShareMenu((prev) => !prev)}
+                title="Share to Instagram Story or Link"
+                className="flex items-center gap-1 border border-current px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider transition hover:bg-current/10"
+              >
+                {copiedLink ? <Check className="h-3.5 w-3.5" /> : <Share2 className="h-3.5 w-3.5" />}
+                <span>{copiedLink ? "Copied" : "Share"}</span>
+              </button>
+
+              {showShareMenu && (
+                <div
+                  style={{ backgroundColor: note.moodColor || "#F4F4F0", color: fg }}
+                  className="fixed inset-x-3 bottom-3 z-50 border-2 border-current p-3 sm:absolute sm:inset-x-auto sm:bottom-auto sm:right-0 sm:top-full sm:mt-2 sm:w-64"
+                >
+                  <div className="mb-2 flex items-center justify-between border-b border-current/25 pb-1.5 text-[10px] font-bold uppercase tracking-widest">
+                    <span>SHARE TRANSMISSION</span>
+                    <button
+                      type="button"
+                      onClick={() => setShowShareMenu(false)}
+                      className="p-0.5 opacity-75 hover:opacity-100"
+                      aria-label="Close share options"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    {!isLocked && (
+                      <button
+                        type="button"
+                        disabled={sharingStory}
+                        onClick={handleShareStoryCard}
+                        className="flex w-full items-center justify-between border border-current px-2.5 py-2 text-left text-[11px] font-bold uppercase tracking-wider transition hover:bg-current/10 disabled:opacity-50"
+                      >
+                        <span>{sharingStory ? "PREPARING..." : "IG STORY / SOCIAL PNG"}</span>
+                        <span className="text-[9px] opacity-75">9:16</span>
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={handleNativeLinkShare}
+                      className="flex w-full items-center justify-between border border-current px-2.5 py-2 text-left text-[11px] font-bold uppercase tracking-wider transition hover:bg-current/10"
+                    >
+                      <span>SHARE LINK / COPY URL</span>
+                      <span className="text-[9px] opacity-75">LINK</span>
+                    </button>
+
+                    {!isLocked && (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await downloadSwissPoster(note);
+                          setShareStatus("9:16 PNG downloaded");
+                          setTimeout(() => {
+                            setShareStatus(null);
+                            setShowShareMenu(false);
+                          }, 1500);
+                        }}
+                        className="flex w-full items-center justify-between border border-current px-2.5 py-2 text-left text-[11px] font-bold uppercase tracking-wider transition hover:bg-current/10"
+                      >
+                        <span>SAVE 9:16 POSTER</span>
+                        <Download className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {shareStatus && (
+                    <div className="mt-2 border-t border-current/25 pt-1.5 text-[10px] font-mono uppercase tracking-wider">
+                      {shareStatus}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
             {!isLocked && (
               <button
                 onClick={() => downloadSwissPoster(note)}
