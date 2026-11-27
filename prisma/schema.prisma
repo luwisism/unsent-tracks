@@ -23,6 +23,8 @@ model User {
   anthemAlbumArt  String?
   anthemPreview   String?
   pinnedNoteId    Int?
+  isSuspended     Boolean   @default(false)
+  suspendedReason String?
   notes           Note[]
   mixtapes        Mixtape[]
   createdAt       DateTime  @default(now())
@@ -51,6 +53,9 @@ model Note {
   passcodeHint String?
   maxListens   Int?
   listenCount  Int           @default(0)
+  isFeatured   Boolean       @default(false)
+  isHidden     Boolean       @default(false)
+  moderationNote String?
   userId       Int?
   user         User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
   reactions    Reaction[]
@@ -129,4 +134,30 @@ model Activity {
 
   user      User     @relation("UserActivities", fields: [userId], references: [id], onDelete: Cascade)
   note      Note?    @relation(fields: [noteId], references: [id], onDelete: SetNull)
+}
+
+
+model AdminCredential {
+  id           Int      @id @default(1)
+  username     String   @unique
+  passwordHash String
+  tokenVersion Int      @default(1)
+  updatedAt    DateTime @updatedAt
+}
+
+model SystemSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+model AdminAuditLog {
+  id         Int      @id @default(autoincrement())
+  actor      String
+  action     String
+  targetType String
+  targetId   String
+  details    String   @default("")
+  ipAddress  String   @default("unknown")
+  createdAt  DateTime @default(now())
 }
