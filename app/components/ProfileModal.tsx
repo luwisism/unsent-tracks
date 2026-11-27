@@ -197,7 +197,7 @@ export default function ProfileModal({
     setExportingPoster(true);
     try {
       await downloadSwissProfilePoster(
-        profile,
+        { ...profile, badge: liveBadge ?? profile.badge },
         {
           notesCount: notes.length,
           followersCount,

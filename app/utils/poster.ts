@@ -146,7 +146,10 @@ export async function downloadSwissPoster(note: Note) {
   // 5. Author Handle & Coordinates
   cursorY += 4;
   ctx.font = "bold 22px monospace";
-  const authorLabel = note.user ? `BY @${note.user.username.toUpperCase()}` : "BY ANONYMOUS";
+  const badgeSuffix = note.user?.badge ? `  //  ◉ ${note.user.badge.trim().toUpperCase()}` : "";
+  const authorLabel = note.user
+    ? `BY @${note.user.username.toUpperCase()}${badgeSuffix}`
+    : "BY ANONYMOUS";
   const authorLines = wrapLines(ctx, authorLabel, safeWidth, 1);
   ctx.fillText(authorLines[0] || authorLabel, innerLeft, cursorY);
   cursorY += 76;
@@ -239,6 +242,33 @@ export async function downloadSwissPoster(note: Note) {
   triggerCanvasPngDownload(canvas, `side-b-${String(note.id).padStart(3, "0")}.png`);
 }
 
+
+function drawPosterBadgeStamp(
+  ctx: CanvasRenderingContext2D,
+  badge: string | null | undefined,
+  x: number,
+  y: number,
+  surfaceBg: string,
+  surfaceFg: string
+) {
+  const clean = (badge || "").trim().toUpperCase();
+  if (!clean) return;
+  const label = `◉ ${clean}`;
+  ctx.save();
+  ctx.font = "bold 20px monospace";
+  const padX = 14;
+  const boxH = 34;
+  const boxW = ctx.measureText(label).width + padX * 2;
+  ctx.fillStyle = "#E11D2A";
+  ctx.fillRect(x, y - boxH + 8, boxW, boxH);
+  ctx.strokeStyle = surfaceFg;
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x, y - boxH + 8, boxW, boxH);
+  ctx.fillStyle = "#FFFFFF";
+  ctx.fillText(label, x + padX, y + 2);
+  ctx.restore();
+}
+
 export function formatIndex(id: number): string {
   return String(id).padStart(3, "0");
 }
@@ -255,6 +285,7 @@ export function formatCountdown(unlockAt: string | Date, nowTick: number): strin
 export async function downloadSwissProfilePoster(
   profile: {
     username: string;
+    badge?: string | null;
     monogramColor: string;
     bio?: string;
     archetype?: string;
@@ -315,9 +346,16 @@ export async function downloadSwissProfilePoster(
 
   const handleLeft = innerLeft + 184;
   const handleMaxW = innerRight - handleLeft;
+  const cleanProfileBadge = (profile.badge || "").trim().toUpperCase();
   ctx.font = "bold 56px Helvetica, Arial, sans-serif";
-  const handleLines = wrapLines(ctx, `@${profile.username}`, handleMaxW, 1);
-  ctx.fillText(handleLines[0] || `@${profile.username}`, handleLeft, 290);
+  const handleText = `@${profile.username}`;
+  const handleLines = wrapLines(ctx, handleText, handleMaxW, 1);
+  const renderedHandle = handleLines[0] || handleText;
+  ctx.fillText(renderedHandle, handleLeft, 290);
+  if (cleanProfileBadge) {
+    const handleWidth = ctx.measureText(renderedHandle).width;
+    drawPosterBadgeStamp(ctx, cleanProfileBadge, handleLeft + handleWidth + 20, 282, bg, fg);
+  }
 
   ctx.font = "bold 22px monospace";
   const coordText = `LOC // ${(profile.coordinates || "UNLISTED FREQUENCY").toUpperCase()}`;
