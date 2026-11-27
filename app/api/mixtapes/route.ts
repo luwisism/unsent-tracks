@@ -99,6 +99,31 @@ export async function POST(request: Request) {
       },
     });
 
+    try {
+      const curator = String(creatorName || "ANON").trim() || "ANON";
+      const notesWithAuthors = await prisma.note.findMany({
+        where: { id: { in: uniqueIds }, userId: { not: null } },
+        select: { id: true, recipient: true, userId: true },
+      });
+      const seenUsers = new Set<number>();
+      for (const n of notesWithAuthors) {
+        if (n.userId && !seenUsers.has(n.userId)) {
+          seenUsers.add(n.userId);
+          await prisma.notification.create({
+            data: {
+              userId: n.userId,
+              type: "MIXTAPE",
+              actorHandle: curator,
+              noteId: n.id,
+              message: `featured your note to ${n.recipient} in mixtape "${title.trim()}"`,
+            },
+          });
+        }
+      }
+    } catch (e) {
+      console.error("Mixtape notification error:", e);
+    }
+
     return NextResponse.json({ mixtape: created }, { status: 201 });
   } catch {
     return NextResponse.json({ error: "Failed to create mixtape." }, { status: 500 });

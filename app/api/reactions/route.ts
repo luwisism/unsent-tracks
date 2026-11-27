@@ -30,6 +30,28 @@ export async function POST(request: Request) {
       ? await prisma.user.findUnique({ where: { username: actorHandle } })
       : null;
 
+    if (!actor) {
+      try {
+        const anonNote = await prisma.note.findUnique({
+          where: { id: noteId },
+          select: { recipient: true, userId: true },
+        });
+        if (anonNote?.userId) {
+          await prisma.notification.create({
+            data: {
+              userId: anonNote.userId,
+              type: "REACTION",
+              actorHandle: "ANONYMOUS",
+              noteId,
+              message: `sent ${type} on your note to ${anonNote.recipient}`,
+            },
+          });
+        }
+      } catch (e) {
+        console.error("Anon reaction notification error:", e);
+      }
+    }
+
     if (actor) {
       const existing = await prisma.reaction.findFirst({
         where: { noteId, type, userId: actor.id },

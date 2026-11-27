@@ -211,6 +211,41 @@ export async function POST(request: Request) {
       },
     });
 
+    try {
+      const textBlob = `${recipient} ${message} ${lyricExcerpt || ""}`;
+      const handles = Array.from(
+        new Set(
+          Array.from(textBlob.matchAll(/@([a-zA-Z0-9_.-]{2,24})/g)).map((m) =>
+            m[1].toLowerCase()
+          )
+        )
+      );
+      if (handles.length > 0) {
+        const sender = userId
+          ? await prisma.user.findUnique({ where: { id: Number(userId) }, select: { username: true } })
+          : null;
+        const targets = await prisma.user.findMany({
+          where: { username: { in: handles } },
+          select: { id: true, username: true },
+        });
+        for (const t of targets) {
+          if (!userId || t.id !== Number(userId)) {
+            await prisma.notification.create({
+              data: {
+                userId: t.id,
+                type: "MENTION",
+                actorHandle: sender?.username || "SOMEONE",
+                noteId: created.id,
+                message: `mentioned @${t.username} in a transmission to ${recipient.trim()}`,
+              },
+            });
+          }
+        }
+      }
+    } catch (e) {
+      console.error("Note mention notification error:", e);
+    }
+
     const { passcode: _p, ...safeNote } = created;
     return NextResponse.json(
       { ...safeNote, isPasscodeProtected: Boolean(created.passcode) },

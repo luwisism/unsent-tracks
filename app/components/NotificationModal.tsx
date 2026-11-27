@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X, Bell, CheckCheck } from "lucide-react";
+import { X, Bell, CheckCheck, RefreshCw } from "lucide-react";
 import { UserProfile } from "../types/archive";
 
 export interface NotificationItem {
@@ -51,6 +51,9 @@ export default function NotificationModal({
 
   useEffect(() => {
     loadNotifications();
+    if (!currentUser?.id) return;
+    const timer = window.setInterval(loadNotifications, 5000);
+    return () => window.clearInterval(timer);
   }, [currentUser?.id]);
 
   const handleMarkAllRead = async () => {
@@ -100,6 +103,15 @@ export default function NotificationModal({
           </div>
 
           <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={loadNotifications}
+              title="Refresh alerts"
+              className="flex items-center gap-1 border border-[#111111] bg-white px-2 py-1 font-mono text-[10px] font-bold uppercase hover:bg-[#111111] hover:text-white"
+            >
+              <RefreshCw className="h-3 w-3" />
+              SYNC
+            </button>
             {items.some((i) => !i.isRead) && (
               <button
                 type="button"
