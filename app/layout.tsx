@@ -20,9 +20,24 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://sideb.bckn.software"),
   title: "SIDE B // 026 — Unsent Notes & Soundtrack Archive",
   description:
     "An editorial archive of unsent transmissions, synced lyrics, mixtapes, and 24-hour frequencies.",
+  openGraph: {
+    type: "website",
+    siteName: "SIDE B // 026",
+    title: "SIDE B // 026 — Unsent Notes & Soundtrack Archive",
+    description:
+      "An editorial archive of unsent transmissions, synced lyrics, mixtapes, and 24-hour frequencies.",
+    url: "https://sideb.bckn.software",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "SIDE B // 026 — Unsent Notes & Soundtrack Archive",
+    description:
+      "An editorial archive of unsent transmissions, synced lyrics, mixtapes, and 24-hour frequencies.",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
