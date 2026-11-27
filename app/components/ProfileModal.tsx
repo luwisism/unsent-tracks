@@ -109,6 +109,7 @@ export default function ProfileModal({
   const [pinBusy, setPinBusy] = useState(false);
   const [liveBadge, setLiveBadge] = useState<string | null | undefined>(profile.badge);
   const [exportingPoster, setExportingPoster] = useState(false);
+  const [copiedProfileLink, setCopiedProfileLink] = useState(false);
   const [profileLinkCopied, setProfileLinkCopied] = useState(false);
 
   const isOwnProfile = currentUser?.username === profile.username;
@@ -277,7 +278,26 @@ export default function ProfileModal({
                 SIDE B // IDENTITY FREQUENCY
               </span>
 
-              <div className="flex items-center gap-1.5">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const res = await shareSideBLink({
+                      kind: "profile",
+                      username: profile.username,
+                    });
+                    if (res === "copied") {
+                      setCopiedProfileLink(true);
+                      setTimeout(() => setCopiedProfileLink(false), 1800);
+                    }
+                  }}
+                  title="Share profile link"
+                  className="flex h-8 items-center gap-1.5 border border-current px-2.5 font-mono text-[10px] font-bold uppercase tracking-wider transition hover:bg-current/15"
+                >
+                  <Share2 className="h-3.5 w-3.5" />
+                  <span>{copiedProfileLink ? "COPIED" : "SHARE"}</span>
+                </button>
+
                 <button
                   onClick={handleExport9x16}
                   disabled={exportingPoster}
