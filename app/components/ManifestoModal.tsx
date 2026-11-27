@@ -50,8 +50,41 @@ export function CubeEyesIcon({ className = "h-3.5 w-3.5" }: { className?: string
 }
 
 export function FloatingEyesOnly({ onWink }: { onWink?: () => void }) {
+  const eyesRef = useRef<HTMLSpanElement | null>(null);
+  const [offset, setOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [blinking, setBlinking] = useState(false);
   const [winking, setWinking] = useState(false);
+
+  useEffect(() => {
+    const updateLook = (clientX: number, clientY: number) => {
+      const el = eyesRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const dx = clientX - cx;
+      const dy = clientY - cy;
+      const dist = Math.hypot(dx, dy) || 1;
+      const maxShift = 2.5;
+      const factor = Math.min(1, dist / 140) * maxShift;
+      setOffset({
+        x: Math.round((dx / dist) * factor * 10) / 10,
+        y: Math.round((dy / dist) * factor * 10) / 10,
+      });
+    };
+
+    const onMouseMove = (e: MouseEvent) => updateLook(e.clientX, e.clientY);
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.touches[0]) updateLook(e.touches[0].clientX, e.touches[0].clientY);
+    };
+
+    window.addEventListener("mousemove", onMouseMove, { passive: true });
+    window.addEventListener("touchmove", onTouchMove, { passive: true });
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("touchmove", onTouchMove);
+    };
+  }, []);
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
@@ -62,7 +95,7 @@ export function FloatingEyesOnly({ onWink }: { onWink?: () => void }) {
           setBlinking(false);
           schedule();
         }, 120);
-      }, 2500 + Math.random() * 2400);
+      }, 2400 + Math.random() * 2400);
     };
     schedule();
     return () => clearTimeout(timer);
@@ -77,10 +110,12 @@ export function FloatingEyesOnly({ onWink }: { onWink?: () => void }) {
 
   return (
     <span
+      ref={eyesRef}
       onClick={handleClick}
       role="img"
-      aria-label="Expressive eyes"
-      className="inline-flex items-center gap-1.5 px-0.5 text-current"
+      aria-label="Tracking expressive eyes"
+      style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }}
+      className="inline-flex items-center gap-1.5 px-0.5 text-current transition-transform duration-75 ease-out"
     >
       <span
         className={`block w-1.5 bg-current transition-all duration-100 ${
