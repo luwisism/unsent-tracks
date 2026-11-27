@@ -126,6 +126,7 @@ export default function SideBAdminPage() {
   const [toast, setToast] = useState<{ type: "ok" | "err"; text: string } | null>(null);
 
   const [bannerDraft, setBannerDraft] = useState("");
+  const [customBadgeByUser, setCustomBadgeByUser] = useState<Record<number, string>>({});
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newAdminUsername, setNewAdminUsername] = useState("");
@@ -681,11 +682,78 @@ export default function SideBAdminPage() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <button
-                    onClick={() => {
-                      const reason = user.isSuspended
-                        ? ""
-                        : prompt(`Reason for suspending @${user.username}:`, "Policy violation") ||
+              {["RESIDENT", "ARCHIVIST", "1ST PRESS", "SELECTOR"].map((preset) => (
+                <button
+                  key={preset}
+                  type="button"
+                  disabled={busyKey === `badge-${user.id}`}
+                  onClick={() =>
+                    runAction(
+                      `badge-${user.id}`,
+                      {
+                        action: "SET_USER_BADGE",
+                        userId: user.id,
+                        badge: user.badge === preset ? "" : preset,
+                      },
+                      user.badge === preset
+                        ? `Cleared badge for @${user.username}`
+                        : `Stamped ${preset} on @${user.username}`
+                    )
+                  }
+                  className={`border px-2 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider ${
+                    user.badge === preset
+                      ? "border-[#111111] bg-[#111111] text-white"
+                      : "border-[#111111] hover:bg-neutral-100"
+                  }`}
+                >
+                  {preset}
+                </button>
+              ))}
+              <input
+                value={customBadgeByUser[user.id] || ""}
+                onChange={(e) =>
+                  setCustomBadgeByUser((prev) => ({ ...prev, [user.id]: e.target.value }))
+                }
+                placeholder="CUSTOM BADGE"
+                className="w-28 border border-[#111111] bg-white px-2 py-1.5 font-mono text-[10px] uppercase outline-none"
+              />
+              <button
+                type="button"
+                disabled={busyKey === `badge-${user.id}` || !(customBadgeByUser[user.id] || "").trim()}
+                onClick={() => {
+                  const val = (customBadgeByUser[user.id] || "").trim();
+                  runAction(
+                    `badge-${user.id}`,
+                    { action: "SET_USER_BADGE", userId: user.id, badge: val },
+                    `Stamped ${val.toUpperCase()} on @${user.username}`
+                  );
+                  setCustomBadgeByUser((prev) => ({ ...prev, [user.id]: "" }));
+                }}
+                className="border border-[#111111] px-2.5 py-1.5 font-mono text-[10px] font-bold uppercase hover:bg-[#111111] hover:text-white disabled:opacity-40"
+              >
+                STAMP
+              </button>
+              {user.badge && (
+                <button
+                  type="button"
+                  disabled={busyKey === `badge-${user.id}`}
+                  onClick={() =>
+                    runAction(
+                      `badge-${user.id}`,
+                      { action: "SET_USER_BADGE", userId: user.id, badge: "" },
+                      `Cleared badge for @${user.username}`
+                    )
+                  }
+                  className="border border-[#E11D2A] px-2 py-1.5 font-mono text-[10px] font-bold uppercase text-[#E11D2A] hover:bg-[#E11D2A] hover:text-white"
+                >
+                  CLEAR
+                </button>
+              )}
+              <button
+                onClick={() => {
+                  const reason = user.isSuspended
+                    ? ""
+                    : prompt(`Reason for suspending @${user.username}:`, "Policy violation") ||
                           "Suspended by administrator";
                       runAction(
                         `susp-${user.id}`,
