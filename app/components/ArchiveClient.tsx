@@ -23,6 +23,7 @@ import StoryViewerModal from "./StoryViewerModal";
 import ReaderModal from "./ReaderModal";
 import ComposerModal from "./ComposerModal";
 import ProfileModal from "./ProfileModal";
+import ManifestoDispatch from "./ManifestoModal";
 import AuthModal from "./AuthModal";
 import RadioBar from "./RadioBar";
 import NameVaultModal from "./NameVaultModal";
@@ -1123,6 +1124,8 @@ export default function SwissUnsentPlatform() {
           onClose={() => setViewedProfile(null)}
         />
       )}
+
+      <ManifestoDispatch currentUser={currentUser} />
 
       {(isAuthModalOpen || isEditProfileOpen) && (
         <AuthModal

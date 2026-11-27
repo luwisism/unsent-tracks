@@ -162,3 +162,21 @@ model AdminAuditLog {
   ipAddress  String   @default("unknown")
   createdAt  DateTime @default(now())
 }
+
+
+model ManifestoReaction {
+  id        Int      @id @default(autoincrement())
+  type      String   // RESONATES | NEW_TRACK | FREE_SPACE | CO_SIGN
+  visitorId String
+  createdAt DateTime @default(now())
+
+  @@unique([type, visitorId])
+}
+
+model ManifestoComment {
+  id           Int      @id @default(autoincrement())
+  category     String   @default("COMMENT") // COMMENT | SUGGESTION | BUG
+  authorHandle String   @default("ANONYMOUS")
+  message      String
+  createdAt    DateTime @default(now())
+}
