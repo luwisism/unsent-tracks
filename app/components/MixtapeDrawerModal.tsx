@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Play, Plus, CassetteTape, Check } from "lucide-react";
+import { X, Play, Plus, CassetteTape, Check, Share2 } from "lucide-react";
 import { Mixtape, Note, SWISS_SWATCHES, UserProfile } from "../types/archive";
 import { formatIndex, getContrastText } from "../utils/poster";
+import { shareSideBLink } from "../utils/share";
 
 interface MixtapeDrawerModalProps {
   notes: Note[];
@@ -25,6 +26,7 @@ export default function MixtapeDrawerModal({
   const [coverColor, setCoverColor] = useState("#111111");
   const [selectedNoteIds, setSelectedNoteIds] = useState<number[]>([]);
   const [saving, setSaving] = useState(false);
+  const [copiedTapeId, setCopiedTapeId] = useState<number | null>(null);
 
   const loadMixtapes = () => {
     fetch("/api/mixtapes")
