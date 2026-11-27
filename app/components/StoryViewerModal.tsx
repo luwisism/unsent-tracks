@@ -104,12 +104,16 @@ export default function StoryViewerModal({
               >
                 {getMonogram(storyUser.username)}
               </span>
-              <div className="min-w-0">
-                <p className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider truncate">
-                  <span className="truncate">@{storyUser.username}</span>
-                  <MemberBadge badge={storyUser.badge} lightSurface={false} />
-                </p>
-                <p className="font-mono text-[10px] opacity-75 truncate">
+              <div className="min-w-0 mr-2">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-xs font-bold uppercase tracking-wider truncate max-w-full">
+                    @{storyUser.username}
+                  </span>
+                  <span className="shrink-0">
+                    <MemberBadge badge={storyUser.badge} lightSurface={false} />
+                  </span>
+                </div>
+                <p className="mt-0.5 font-mono text-[10px] opacity-75 truncate">
                   NO.{formatIndex(sNote.id)} • {storyUser.archetype}
                 </p>
               </div>
