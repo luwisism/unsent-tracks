@@ -124,6 +124,26 @@ export async function POST(request: Request) {
       console.error("Mixtape notification error:", e);
     }
 
+    try {
+      const curator = String(creatorName || "ANON").replace(/^@/, "").trim().toLowerCase();
+      const curatorUser = curator
+        ? await prisma.user.findUnique({ where: { username: curator }, select: { id: true } })
+        : null;
+      if (curatorUser) {
+        await prisma.activity.create({
+          data: {
+            userId: curatorUser.id,
+            type: "MIXTAPE",
+            summary: `Curated mixtape "${title.trim()}" with ${uniqueIds.length} track(s)`,
+            target: title.trim(),
+            noteId: uniqueIds[0],
+          },
+        });
+      }
+    } catch (e) {
+      console.error("Mixtape activity log error:", e);
+    }
+
     return NextResponse.json({ mixtape: created }, { status: 201 });
   } catch {
     return NextResponse.json({ error: "Failed to create mixtape." }, { status: 500 });

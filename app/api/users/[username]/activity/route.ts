@@ -41,7 +41,7 @@ export async function GET(
       return NextResponse.json({ error: "User not found." }, { status: 404 });
     }
 
-    const [authoredNotes, repliedNotes] = await Promise.all([
+    const [authoredNotes, repliedNotes, rawActivities] = await Promise.all([
       prisma.note.findMany({
         where: { userId: user.id, isHidden: false },
         orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
@@ -69,6 +69,11 @@ export async function GET(
           },
         },
       }),
+      prisma.activity.findMany({
+        where: { userId: user.id },
+        orderBy: { createdAt: "desc" },
+        take: 50,
+      }),
     ]);
 
     const sanitize = (list: typeof authoredNotes) =>
@@ -76,6 +81,27 @@ export async function GET(
         const { passcode, ...rest } = n;
         return { ...rest, isPasscodeProtected: Boolean(passcode) };
       });
+
+    const activities =
+      rawActivities.length > 0
+        ? rawActivities.map((a) => ({
+            id: a.id,
+            type: a.type,
+            summary: a.summary,
+            target: a.target ?? undefined,
+            noteId: a.noteId ?? undefined,
+            createdAt: a.createdAt.toISOString(),
+          }))
+        : [
+            ...authoredNotes.map((n) => ({
+              id: `note-${n.id}`,
+              type: "POSTED",
+              summary: `Posted transmission to ${n.recipient} — ${n.trackName}`,
+              target: n.recipient,
+              noteId: n.id,
+              createdAt: n.createdAt.toISOString(),
+            })),
+          ];
 
     return NextResponse.json({
       badge: user.badge,
@@ -86,8 +112,10 @@ export async function GET(
       following: user.following.map((f) => f.following),
       authoredNotes: sanitize(authoredNotes),
       repliedNotes: sanitize(repliedNotes),
+      activities,
     });
-  } catch {
+  } catch (err) {
+    console.error("Activity GET error:", err);
     return NextResponse.json({ error: "Failed to load user activity." }, { status: 500 });
   }
 }

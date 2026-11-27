@@ -246,6 +246,22 @@ export async function POST(request: Request) {
       console.error("Note mention notification error:", e);
     }
 
+    if (userId) {
+      try {
+        await prisma.activity.create({
+          data: {
+            userId: Number(userId),
+            type: "POSTED",
+            summary: `Posted transmission to ${recipient.trim()} — ${String(track.name)}`,
+            target: recipient.trim(),
+            noteId: created.id,
+          },
+        });
+      } catch (e) {
+        console.error("Note activity log error:", e);
+      }
+    }
+
     const { passcode: _p, ...safeNote } = created;
     return NextResponse.json(
       { ...safeNote, isPasscodeProtected: Boolean(created.passcode) },
