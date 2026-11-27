@@ -1,5 +1,7 @@
 "use client";
 
+import MemberBadge from "./MemberBadge";
+
 import { Play, Pause, X, ChevronLeft, ChevronRight, Volume2 } from "lucide-react";
 import { SIGNAL_TYPES, StoryUser } from "../types/archive";
 import { formatIndex, getContrastText, getMonogram } from "../utils/poster";
@@ -96,8 +98,9 @@ export default function StoryViewerModal({
                 {getMonogram(storyUser.username)}
               </span>
               <div>
-                <p className="text-xs font-bold uppercase tracking-wider">
-                  @{storyUser.username}
+                <p className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider">
+                  <span>@{storyUser.username}</span>
+                  <MemberBadge badge={storyUser.badge} lightSurface={false} />
                 </p>
                 <p className="font-mono text-[10px] opacity-75">
                   NO.{formatIndex(sNote.id)} • {storyUser.archetype}

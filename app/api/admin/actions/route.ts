@@ -137,6 +137,24 @@ export async function POST(request: Request) {
         return NextResponse.json({ success: true });
       }
 
+      case "SET_USER_BADGE": {
+        const userId = Number(body.userId);
+        const user = await prisma.user.findUnique({ where: { id: userId } });
+        if (!user) return NextResponse.json({ error: "User not found." }, { status: 404 });
+        const rawBadge = String(body.badge || "").trim().toUpperCase().slice(0, 20);
+        const nextBadge = rawBadge || null;
+        await prisma.user.update({ where: { id: userId }, data: { badge: nextBadge } });
+        await logAdminAction({
+          actor: admin.username,
+          action: "SET_USER_BADGE",
+          targetType: "USER",
+          targetId: `@${user.username}`,
+          details: nextBadge ? `Assigned badge: ${nextBadge}` : "Cleared badge",
+          ipAddress: ip,
+        });
+        return NextResponse.json({ success: true });
+      }
+
       case "DELETE_USER": {
         const userId = Number(body.userId);
         const user = await prisma.user.findUnique({ where: { id: userId } });

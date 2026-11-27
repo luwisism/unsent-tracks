@@ -55,6 +55,7 @@ interface AdminNote {
 interface AdminUser {
   id: number;
   username: string;
+  badge?: string | null;
   monogramColor: string;
   archetype: string;
   tags: string;

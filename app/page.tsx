@@ -18,6 +18,7 @@ import { VinylAmbienceEngine } from "./utils/vinylAudio";
 import Navbar from "./components/Navbar";
 import StoriesStrip from "./components/StoriesStrip";
 import NoteCard from "./components/NoteCard";
+import MemberBadge from "./components/MemberBadge";
 import StoryViewerModal from "./components/StoryViewerModal";
 import ReaderModal from "./components/ReaderModal";
 import ComposerModal from "./components/ComposerModal";

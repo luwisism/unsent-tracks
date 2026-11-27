@@ -1,5 +1,7 @@
 "use client";
 
+import MemberBadge from "./MemberBadge";
+
 import { motion } from "motion/react";
 import { Play, Pause, Lock, Disc, Flame, KeyRound } from "lucide-react";
 import { TACTILE_SPRING } from "../utils/motion";
@@ -87,6 +89,7 @@ export default function NoteCard({
                 {getMonogram(note.user.username)}
               </span>
               @{note.user.username}
+              <MemberBadge badge={note.user.badge} lightSurface={false} />
             </motion.button>
           ) : (
             <span

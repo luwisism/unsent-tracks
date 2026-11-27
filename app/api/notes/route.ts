@@ -1,59 +1,48 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../lib/prisma";
 
-function sanitizeNote(note: Record<string, unknown>, unlockedIds: Set<number>) {
-  const hasPasscode = Boolean(note.passcode);
-  const isUnlocked = !hasPasscode || unlockedIds.has(Number(note.id));
-  const { passcode: _ignored, ...rest } = note;
-  return {
-    ...rest,
-    isPasscodeProtected: hasPasscode,
-    message: isUnlocked ? note.message : "[ENCRYPTED TRANSMISSION — PASSCODE REQUIRED]",
-    lyricExcerpt: isUnlocked ? note.lyricExcerpt : null,
-  };
-}
+const USER_SELECT = {
+  id: true,
+  username: true,
+  badge: true,
+  monogramColor: true,
+  archetype: true,
+  tags: true,
+} as const;
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const search = searchParams.get("search") || "";
-    const color = searchParams.get("color") || "";
-    const tag = searchParams.get("tag") || searchParams.get("archetype") || "";
-    const idParam = searchParams.get("id");
-    const unlockedParam = searchParams.get("unlocked") || "";
-
-    const unlockedIds = new Set(
-      unlockedParam
-        .split(",")
-        .map((s) => Number(s.trim()))
-        .filter((n) => !Number.isNaN(n) && n > 0)
-    );
+    const q = (searchParams.get("q") || "").trim().toLowerCase();
+    const color = (searchParams.get("color") || "").trim();
+    const tag = (searchParams.get("tag") || "").trim().toLowerCase();
 
     const notes = await prisma.note.findMany({
       where: {
+        isHidden: false,
         AND: [
-          idParam ? { id: Number(idParam) } : {},
-          search
+          color && color !== "ALL" ? { moodColor: color } : {},
+          q
             ? {
                 OR: [
-                  { recipient: { contains: search, mode: "insensitive" } },
-                  { message: { contains: search, mode: "insensitive" } },
-                  { trackName: { contains: search, mode: "insensitive" } },
-                  { artistName: { contains: search, mode: "insensitive" } },
-                  { lyricExcerpt: { contains: search, mode: "insensitive" } },
-                  { user: { username: { contains: search, mode: "insensitive" } } },
-                  { user: { tags: { contains: search, mode: "insensitive" } } },
+                  { recipient: { contains: q, mode: "insensitive" } },
+                  { message: { contains: q, mode: "insensitive" } },
+                  { trackName: { contains: q, mode: "insensitive" } },
+                  { artistName: { contains: q, mode: "insensitive" } },
+                  { lyricExcerpt: { contains: q, mode: "insensitive" } },
+                  { user: { is: { username: { contains: q, mode: "insensitive" } } } },
                 ],
               }
             : {},
-          color ? { moodColor: { equals: color, mode: "insensitive" } } : {},
-          tag
+          tag && tag !== "ALL"
             ? {
                 user: {
-                  OR: [
-                    { tags: { contains: tag, mode: "insensitive" } },
-                    { archetype: { contains: tag, mode: "insensitive" } },
-                  ],
+                  is: {
+                    OR: [
+                      { tags: { contains: tag, mode: "insensitive" } },
+                      { archetype: { contains: tag, mode: "insensitive" } },
+                    ],
+                  },
                 },
               }
             : {},
@@ -62,59 +51,57 @@ export async function GET(request: Request) {
       include: {
         reactions: { select: { id: true, type: true, userId: true } },
         replies: { orderBy: { createdAt: "asc" } },
-        user: {
-          select: {
-            id: true,
-            username: true,
-            monogramColor: true,
-            archetype: true,
-            tags: true,
-          },
-        },
+        user: { select: USER_SELECT },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
     });
 
     const allNotesMeta = await prisma.note.findMany({
+      where: { isHidden: false },
       select: {
         moodColor: true,
         user: { select: { tags: true, archetype: true } },
       },
     });
 
-    const colorSet = new Set<string>();
     const tagCounts = new Map<string, number>();
-
     for (const item of allNotesMeta) {
-      if (item.moodColor) colorSet.add(item.moodColor.toUpperCase());
-      const rawTags = item.user?.tags || item.user?.archetype || "";
-      rawTags
+      const raw = [item.user?.tags || "", item.user?.archetype || ""].join(",");
+      const parts = raw
         .split(",")
-        .map((t) => t.trim().toUpperCase())
-        .filter(Boolean)
-        .forEach((t) => {
-          tagCounts.set(t, (tagCounts.get(t) || 0) + 1);
-        });
+        .map((s) => s.trim().toUpperCase())
+        .filter(Boolean);
+      for (const p of new Set(parts)) {
+        tagCounts.set(p, (tagCounts.get(p) || 0) + 1);
+      }
     }
 
-    const availableTags = Array.from(tagCounts.entries())
+    const trendingTags = Array.from(tagCounts.entries())
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 10)
-      .map(([t]) => t);
+      .slice(0, 8)
+      .map(([name, count]) => ({ name, count }));
 
     const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const activeStoryUsers = await prisma.user.findMany({
+    const storyUsersRaw = await prisma.user.findMany({
       where: {
-        notes: { some: { createdAt: { gte: yesterday }, passcode: null } },
+        isSuspended: false,
+        notes: {
+          some: {
+            createdAt: { gte: yesterday },
+            passcode: null,
+            isHidden: false,
+          },
+        },
       },
       select: {
         id: true,
         username: true,
+        badge: true,
         monogramColor: true,
         archetype: true,
         tags: true,
         notes: {
-          where: { createdAt: { gte: yesterday }, passcode: null },
+          where: { createdAt: { gte: yesterday }, passcode: null, isHidden: false },
           include: {
             reactions: { select: { id: true, type: true } },
             replies: { orderBy: { createdAt: "asc" } },
@@ -124,87 +111,112 @@ export async function GET(request: Request) {
       },
     });
 
-    return NextResponse.json(
-      {
-        notes: notes.map((n) => sanitizeNote(n as unknown as Record<string, unknown>, unlockedIds)),
-        stories: activeStoryUsers,
-        availableColors: Array.from(colorSet),
-        availableTags,
-      },
-      {
-        headers: {
-          "Cache-Control": "no-store, no-cache, must-revalidate",
-        },
-      }
-    );
-  } catch (err) {
-    console.error("GET /api/notes error:", err);
-    return NextResponse.json({ error: "Failed to load archive" }, { status: 500 });
+    const formattedNotes = notes.map((n) => {
+      const { passcode, ...rest } = n;
+      return {
+        ...rest,
+        isPasscodeProtected: Boolean(passcode),
+      };
+    });
+
+    return NextResponse.json({
+      notes: formattedNotes,
+      trendingTags,
+      storyUsers: storyUsersRaw.map((u) => ({
+        ...u,
+        notes: u.notes.map((sn) => {
+          const { passcode, ...sRest } = sn;
+          return { ...sRest, isPasscodeProtected: Boolean(passcode) };
+        }),
+      })),
+    });
+  } catch {
+    return NextResponse.json({ error: "Failed to load transmissions." }, { status: 500 });
   }
 }
 
 export async function POST(request: Request) {
   try {
+    const postingLocked = await prisma.systemSetting.findUnique({
+      where: { key: "posting_locked" },
+    });
+    if (postingLocked?.value === "true") {
+      return NextResponse.json(
+        { error: "New transmissions are temporarily paused by archive administration." },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const {
       recipient,
       message,
       moodColor,
       track,
-      userId,
       lyricExcerpt,
+      syncedLyrics,
       clipStart,
       clipEnd,
       unlockAt,
       passcode,
       passcodeHint,
       maxListens,
+      userId,
     } = body;
 
-    if (!recipient || !message || !track) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    if (!recipient?.trim() || !message?.trim() || !track?.name || !track?.artist) {
+      return NextResponse.json(
+        { error: "Recipient, message, and a selected song are required." },
+        { status: 400 }
+      );
     }
 
-    const newNote = await prisma.note.create({
+    if (userId) {
+      const author = await prisma.user.findUnique({
+        where: { id: Number(userId) },
+        select: { isSuspended: true, suspendedReason: true },
+      });
+      if (author?.isSuspended) {
+        return NextResponse.json(
+          { error: author.suspendedReason || "This account is currently suspended." },
+          { status: 403 }
+        );
+      }
+    }
+
+    const created = await prisma.note.create({
       data: {
-        recipient,
-        message,
-        moodColor: (moodColor || "#FFFFFF").toUpperCase(),
-        trackId: track.id,
-        trackName: track.name,
-        artistName: track.artist,
-        albumArt: track.albumArt || "",
-        previewUrl: track.previewUrl || null,
-        lyricExcerpt: lyricExcerpt || null,
-        clipStart: typeof clipStart === "number" ? clipStart : 0,
-        clipEnd: typeof clipEnd === "number" ? clipEnd : 30,
+        recipient: recipient.trim(),
+        message: message.trim(),
+        moodColor: moodColor || "#111111",
+        trackId: String(track.id || ""),
+        trackName: String(track.name),
+        artistName: String(track.artist),
+        albumArt: String(track.albumArt || ""),
+        previewUrl: track.previewUrl ? String(track.previewUrl) : null,
+        lyricExcerpt: lyricExcerpt?.trim() || null,
+        syncedLyrics: syncedLyrics ? String(syncedLyrics) : null,
+        clipStart: Number.isFinite(Number(clipStart)) ? Math.max(0, Number(clipStart)) : 0,
+        clipEnd: Number.isFinite(Number(clipEnd)) ? Math.max(5, Number(clipEnd)) : 30,
         unlockAt: unlockAt ? new Date(unlockAt) : null,
-        passcode: passcode && passcode.trim() ? passcode.trim() : null,
-        passcodeHint: passcodeHint && passcodeHint.trim() ? passcodeHint.trim() : null,
+        passcode: passcode && String(passcode).trim() ? String(passcode).trim() : null,
+        passcodeHint: passcodeHint && String(passcodeHint).trim() ? String(passcodeHint).trim() : null,
         maxListens: maxListens && Number(maxListens) > 0 ? Number(maxListens) : null,
         userId: userId ? Number(userId) : null,
       },
       include: {
         reactions: { select: { id: true, type: true } },
         replies: { orderBy: { createdAt: "asc" } },
-        user: {
-          select: {
-            id: true,
-            username: true,
-            monogramColor: true,
-            archetype: true,
-            tags: true,
-          },
-        },
+        user: { select: USER_SELECT },
       },
     });
 
-    const { passcode: _p, ...safeNote } = newNote;
+    const { passcode: _p, ...safeNote } = created;
     return NextResponse.json(
-      { ...safeNote, isPasscodeProtected: Boolean(newNote.passcode) },
+      { ...safeNote, isPasscodeProtected: Boolean(created.passcode) },
       { status: 201 }
     );
   } catch {
-    return NextResponse.json({ error: "Failed to save note" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to publish transmission." }, { status: 500 });
   }
 }

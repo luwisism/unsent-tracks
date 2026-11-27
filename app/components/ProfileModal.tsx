@@ -58,6 +58,7 @@ interface ActivityItem {
 interface MiniUser {
   id: number;
   username: string;
+  badge?: string | null;
   monogramColor: string;
 }
 

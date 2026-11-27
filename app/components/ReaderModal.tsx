@@ -1,5 +1,7 @@
 "use client";
 
+import MemberBadge from "./MemberBadge";
+
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { SWISS_EASE, TACTILE_SPRING } from "../utils/motion";
@@ -214,11 +216,19 @@ export default function ReaderModal({
             <h2 className="mt-1 break-words text-2xl sm:text-3xl font-bold tracking-tight">
               To: {note.recipient}
             </h2>
-            {note.user && (
-              <p className="mt-1 font-mono text-[10px] uppercase opacity-75">
-                POSTED BY @{note.user.username}
-              </p>
-            )}
+            <div className="mt-1.5 flex flex-wrap items-center gap-2 font-mono text-[10px] uppercase opacity-85">
+              {note.isFeatured && (
+                <span className="border border-current px-1.5 py-0.5 text-[9px] font-bold tracking-[0.16em]">
+                  ★ FEATURED
+                </span>
+              )}
+              {note.user && (
+                <span className="inline-flex items-center gap-1.5">
+                  <span>POSTED BY @{note.user.username}</span>
+                  <MemberBadge badge={note.user.badge} lightSurface={false} />
+                </span>
+              )}
+            </div>
           </div>
 
           <div className="flex shrink-0 items-center gap-1.5">

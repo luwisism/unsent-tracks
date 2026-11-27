@@ -36,7 +36,7 @@ export async function GET() {
         orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
         take: 150,
         include: {
-          user: { select: { id: true, username: true, monogramColor: true, isSuspended: true } },
+          user: { select: { id: true, username: true, badge: true, monogramColor: true, isSuspended: true } },
           replies: { orderBy: { createdAt: "desc" } },
           _count: { select: { reactions: true, replies: true } },
         },
@@ -47,6 +47,7 @@ export async function GET() {
         select: {
           id: true,
           username: true,
+          badge: true,
           monogramColor: true,
           archetype: true,
           tags: true,

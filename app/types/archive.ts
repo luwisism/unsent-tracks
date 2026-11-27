@@ -26,12 +26,14 @@ export interface SongReply {
   previewUrl: string | null;
   lyricExcerpt: string | null;
   senderHandle: string | null;
+  senderBadge?: string | null;
   createdAt: string;
 }
 
 export interface UserProfile {
   id: number;
   username: string;
+  badge?: string | null;
   passcode?: string;
   monogramColor: string;
   bio: string;
@@ -44,6 +46,7 @@ export interface UserProfile {
   anthemArtist: string | null;
   anthemAlbumArt: string | null;
   anthemPreview: string | null;
+  pinnedNoteId?: number | null;
   notes?: Note[];
 }
 
@@ -66,12 +69,14 @@ export interface Note {
   passcodeHint?: string | null;
   maxListens?: number | null;
   listenCount?: number;
+  isFeatured?: boolean;
   createdAt: string;
   reactions?: Reaction[];
   replies?: SongReply[];
   user?: {
     id: number;
     username: string;
+    badge?: string | null;
     monogramColor: string;
     archetype: string;
     tags?: string;
@@ -81,6 +86,7 @@ export interface Note {
 export interface StoryUser {
   id: number;
   username: string;
+  badge?: string | null;
   monogramColor: string;
   archetype: string;
   tags?: string;
@@ -101,6 +107,13 @@ export interface Mixtape {
   creatorName: string;
   items: MixtapeItem[];
 }
+
+export const SIDEB_BADGE_PRESETS = [
+  "RESIDENT",
+  "ARCHIVIST",
+  "1ST PRESS",
+  "SELECTOR",
+] as const;
 
 export const SWISS_SWATCHES = [
   { name: "Ink", hex: "#111111", text: "#FFFFFF" },

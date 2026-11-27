@@ -23,6 +23,7 @@ model User {
   anthemAlbumArt  String?
   anthemPreview   String?
   pinnedNoteId    Int?
+  badge           String?
   isSuspended     Boolean   @default(false)
   suspendedReason String?
   notes           Note[]

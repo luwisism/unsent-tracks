@@ -2,46 +2,75 @@ import { NextResponse } from "next/server";
 import { prisma } from "../../lib/prisma";
 
 export async function GET() {
-  const mixtapes = await prisma.mixtape.findMany({
-    include: {
-      items: {
-        orderBy: { order: "asc" },
-        include: {
-          note: {
-            include: {
-              reactions: { select: { id: true, type: true } },
-              replies: true,
-              user: {
-                select: { id: true, username: true, monogramColor: true, archetype: true },
+  try {
+    const mixtapes = await prisma.mixtape.findMany({
+      orderBy: { createdAt: "desc" },
+      include: {
+        items: {
+          orderBy: { order: "asc" },
+          include: {
+            note: {
+              include: {
+                reactions: { select: { id: true, type: true } },
+                replies: true,
+                user: {
+                  select: {
+                    id: true,
+                    username: true,
+                    badge: true,
+                    monogramColor: true,
+                    archetype: true,
+                  },
+                },
               },
             },
           },
         },
       },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+    });
 
-  return NextResponse.json({ mixtapes });
+    const sanitized = mixtapes.map((m) => ({
+      ...m,
+      items: m.items
+        .filter((item) => !item.note.isHidden)
+        .map((item) => {
+          const { passcode, ...safeNote } = item.note;
+          return {
+            ...item,
+            note: { ...safeNote, isPasscodeProtected: Boolean(passcode) },
+          };
+        }),
+    }));
+
+    return NextResponse.json({ mixtapes: sanitized });
+  } catch {
+    return NextResponse.json({ error: "Failed to load mixtapes." }, { status: 500 });
+  }
 }
 
 export async function POST(request: Request) {
   try {
-    const { title, subtitle, coverColor, creatorName, userId, noteIds } = await request.json();
-    if (!title || !Array.isArray(noteIds) || noteIds.length === 0) {
-      return NextResponse.json({ error: "Title and at least 1 note required" }, { status: 400 });
+    const body = await request.json();
+    const { title, subtitle, coverColor, creatorName, noteIds } = body;
+
+    if (!title?.trim() || !Array.isArray(noteIds) || noteIds.length === 0) {
+      return NextResponse.json(
+        { error: "Mixtape title and at least one transmission are required." },
+        { status: 400 }
+      );
     }
 
-    const mixtape = await prisma.mixtape.create({
+    const uniqueIds = Array.from(new Set(noteIds.map((id: unknown) => Number(id)).filter(Boolean)));
+
+    const created = await prisma.mixtape.create({
       data: {
-        title,
-        subtitle: subtitle || "",
+        title: title.trim(),
+        subtitle: String(subtitle || "").trim(),
         coverColor: coverColor || "#111111",
-        creatorName: creatorName || "ANONYMOUS",
-        userId: userId ? Number(userId) : null,
+        creatorName: String(creatorName || "ANON").trim() || "ANON",
         items: {
-          create: noteIds.map((nid: number, idx: number) => ({
-            noteId: Number(nid),
+          create: uniqueIds.map((noteId, idx) => ({
+            noteId,
             order: idx,
           })),
         },
@@ -50,14 +79,28 @@ export async function POST(request: Request) {
         items: {
           orderBy: { order: "asc" },
           include: {
-            note: true,
+            note: {
+              include: {
+                reactions: { select: { id: true, type: true } },
+                replies: true,
+                user: {
+                  select: {
+                    id: true,
+                    username: true,
+                    badge: true,
+                    monogramColor: true,
+                    archetype: true,
+                  },
+                },
+              },
+            },
           },
         },
       },
     });
 
-    return NextResponse.json(mixtape, { status: 201 });
+    return NextResponse.json({ mixtape: created }, { status: 201 });
   } catch {
-    return NextResponse.json({ error: "Failed to create mixtape" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to create mixtape." }, { status: 500 });
   }
 }
