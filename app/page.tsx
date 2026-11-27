@@ -202,7 +202,7 @@ export default function SwissUnsentPlatform() {
       if (Array.isArray(data.following)) {
         setFollowingHandles(
           data.following
-            .map((f: any) => f.following?.username)
+            .map((f: { following?: { username?: string | null } | null }) => f.following?.username)
             .filter(Boolean)
         );
       }
@@ -893,7 +893,7 @@ export default function SwissUnsentPlatform() {
                 className={`group border-r border-b ${borderClass} p-5 transition-colors`}
               >
                 <div className="mb-4 flex items-center justify-between gap-2 font-mono text-[10px] uppercase tracking-[0.18em]">
-                  <span className="opacity-70">{sk.code} // SCANNING</span>
+                  <span className="opacity-70">{`${sk.code} // SCANNING`}</span>
                   <span className="border border-[#E11D2A] px-1.5 py-0.5 text-[#E11D2A]">
                     SYNC
                   </span>

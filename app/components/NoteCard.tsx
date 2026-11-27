@@ -43,11 +43,11 @@ export default function NoteCard({
   return (
     <motion.article
       onClick={onCardClick}
-      initial={{ opacity: 0, y: 12 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, y: 24, scale: 0.975 }}
+      whileInView={{ opacity: 1, y: 0, scale: 1 }}
       viewport={{ once: true, amount: "some" }}
-      whileTap={{ scale: 0.985 }}
-      transition={TACTILE_SPRING}
+      whileTap={{ scale: 0.96 }}
+      transition={{ type: "spring", stiffness: 380, damping: 28, mass: 0.8 }}
       style={{ backgroundColor: note.moodColor, color: textColor }}
       className={`group flex cursor-pointer flex-col justify-between border-b border-r ${gridBorder} p-6 transition-opacity hover:opacity-95`}
     >

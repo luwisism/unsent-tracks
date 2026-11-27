@@ -22,7 +22,7 @@ export async function GET(request: Request) {
     const data = await searchRes.json();
 
     const tracks =
-      data.results?.map((item: any) => ({
+      data.results?.map((item: { trackId?: number | string; trackName?: string; artistName?: string; artworkUrl100?: string; previewUrl?: string }) => ({
         id: String(item.trackId),
         name: item.trackName,
         artist: item.artistName,

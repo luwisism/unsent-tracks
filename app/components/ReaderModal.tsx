@@ -571,10 +571,10 @@ export default function ReaderModal({
 
           {note.replies && note.replies.length > 0 && (
             <div className="mt-3 space-y-2">
-              {note.replies.map((rep: any) => {
+              {note.replies.map((rep) => {
                 const hasSong = Boolean(rep.trackName);
-                const commentText = rep.lyricExcerpt || rep.lyricLine;
-                const handle = rep.senderHandle || rep.user?.username;
+                const commentText = rep.lyricExcerpt;
+                const handle = rep.senderHandle;
 
                 return (
                   <div
@@ -618,7 +618,7 @@ export default function ReaderModal({
                     </div>
                   {rep.previewUrl && (
                     <button
-                      onClick={() => onPlayPreview(rep.previewUrl, rep.trackId, 0, 30)}
+                      onClick={() => onPlayPreview(rep.previewUrl!, String(rep.trackId ?? ""), 0, 30)}
                       className="shrink-0 border border-current p-1.5 hover:bg-current/10"
                     >
                       {isPlaying && playingTrackId === rep.trackId ? (
