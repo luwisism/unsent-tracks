@@ -4,6 +4,32 @@ import { prisma } from "../../lib/prisma";
 const VALID_REACTIONS = ["RESONATES", "NEW_TRACK", "FREE_SPACE", "CO_SIGN"];
 const VALID_CATEGORIES = ["COMMENT", "SUGGESTION", "BUG"];
 
+function serializeComments(
+  raw: Array<{
+    id: number;
+    category: string;
+    authorHandle: string;
+    message: string;
+    teamStatus: string | null;
+    createdAt: Date;
+    reactions: Array<{ type: string }>;
+  }>
+) {
+  return raw.map((c) => {
+    const heartCount = c.reactions.filter((r) => r.type === "HEART").length;
+    const plusOneCount = c.reactions.filter((r) => r.type === "PLUS_ONE").length;
+    return {
+      id: c.id,
+      category: c.category,
+      authorHandle: c.authorHandle,
+      message: c.message,
+      teamStatus: c.teamStatus,
+      createdAt: c.createdAt,
+      stampCounts: { HEART: heartCount, PLUS_ONE: plusOneCount },
+    };
+  });
+}
+
 export async function GET() {
   try {
     const [reactionGroups, comments] = await Promise.all([
@@ -13,7 +39,8 @@ export async function GET() {
       }),
       prisma.manifestoComment.findMany({
         orderBy: { createdAt: "desc" },
-        take: 100,
+        take: 120,
+        include: { reactions: { select: { type: true } } },
       }),
     ]);
 
@@ -27,7 +54,7 @@ export async function GET() {
       counts[row.type] = row._count.type;
     }
 
-    return NextResponse.json({ counts, comments });
+    return NextResponse.json({ counts, comments: serializeComments(comments) });
   } catch (error) {
     console.error("GET /api/manifesto error:", error);
     return NextResponse.json(
@@ -87,9 +114,72 @@ export async function POST(req: Request) {
           authorHandle,
           message,
         },
+        include: { reactions: { select: { type: true } } },
       });
 
-      return NextResponse.json({ comment: created }, { status: 201 });
+      return NextResponse.json({ comment: serializeComments([created])[0] }, { status: 201 });
+    }
+
+    if (body.action === "stamp_comment") {
+      const commentId = Number(body.commentId || 0);
+      const stampType = String(body.stampType || "").toUpperCase();
+      const visitorId = String(body.visitorId || "").slice(0, 80);
+      const actorHandle = String(body.actorHandle || "SOMEONE").replace(/^@+/, "").trim() || "SOMEONE";
+
+      if (!commentId || !["HEART", "PLUS_ONE"].includes(stampType) || !visitorId) {
+        return NextResponse.json({ error: "Invalid comment stamp" }, { status: 400 });
+      }
+
+      const target = await prisma.manifestoComment.findUnique({ where: { id: commentId } });
+      if (!target) {
+        return NextResponse.json({ error: "Comment not found" }, { status: 404 });
+      }
+
+      const existing = await prisma.manifestoCommentReaction.findUnique({
+        where: { commentId_type_visitorId: { commentId, type: stampType, visitorId } },
+      });
+
+      let active = false;
+      if (existing) {
+        await prisma.manifestoCommentReaction.delete({ where: { id: existing.id } });
+      } else {
+        await prisma.manifestoCommentReaction.create({
+          data: { commentId, type: stampType, visitorId },
+        });
+        active = true;
+
+        if (target.authorHandle && target.authorHandle !== "ANONYMOUS") {
+          const clean = target.authorHandle.replace(/^@+/, "").toLowerCase();
+          if (clean !== actorHandle.toLowerCase()) {
+            const user = await prisma.user.findUnique({
+              where: { username: clean },
+              select: { id: true },
+            });
+            if (user) {
+              await prisma.notification.create({
+                data: {
+                  userId: user.id,
+                  type: "COMMENT_STAMP",
+                  actorHandle,
+                  message: `stamped ${stampType === "HEART" ? "♥" : "+1"} on your LINER // 00 post`,
+                },
+              });
+            }
+          }
+        }
+      }
+
+      const [hearts, plusOnes] = await Promise.all([
+        prisma.manifestoCommentReaction.count({ where: { commentId, type: "HEART" } }),
+        prisma.manifestoCommentReaction.count({ where: { commentId, type: "PLUS_ONE" } }),
+      ]);
+
+      return NextResponse.json({
+        commentId,
+        stampType,
+        active,
+        stampCounts: { HEART: hearts, PLUS_ONE: plusOnes },
+      });
     }
 
     return NextResponse.json({ error: "Unsupported action" }, { status: 400 });

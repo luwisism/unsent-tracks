@@ -46,14 +46,28 @@ export async function POST(
         },
       });
 
-      await prisma.activity.create({
-        data: {
-          userId: followerId,
-          type: "FOLLOWED",
-          summary: `Started following @${targetUser.username}`,
-          target: targetUser.username,
-        },
+      const followerUser = await prisma.user.findUnique({
+        where: { id: followerId },
+        select: { username: true },
       });
+      await Promise.all([
+        prisma.activity.create({
+          data: {
+            userId: followerId,
+            type: "FOLLOWED",
+            summary: `Started following @${targetUser.username}`,
+            target: targetUser.username,
+          },
+        }),
+        prisma.notification.create({
+          data: {
+            userId: targetUser.id,
+            type: "FOLLOW",
+            actorHandle: followerUser?.username || "SOMEONE",
+            message: "started following your frequency",
+          },
+        }),
+      ]);
 
       return NextResponse.json({ following: true });
     }

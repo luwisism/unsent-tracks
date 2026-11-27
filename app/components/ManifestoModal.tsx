@@ -20,7 +20,9 @@ interface ManifestoCommentItem {
   category: "COMMENT" | "SUGGESTION" | "BUG" | string;
   authorHandle: string;
   message: string;
+  teamStatus?: string | null;
   createdAt: string;
+  stampCounts?: { HEART: number; PLUS_ONE: number };
 }
 
 interface ManifestoDispatchProps {
@@ -285,6 +287,7 @@ export default function ManifestoDispatch({ currentUser }: ManifestoDispatchProp
   const [authorName, setAuthorName] = useState("");
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [myCommentStamps, setMyCommentStamps] = useState<Record<string, boolean>>({});
   const [copiedLink, setCopiedLink] = useState(false);
 
   useEffect(() => {
@@ -303,6 +306,7 @@ export default function ManifestoDispatch({ currentUser }: ManifestoDispatchProp
     try {
       const savedReacts = JSON.parse(localStorage.getItem("sideb_manifesto_reacts") || "{}");
       setMyReactions(savedReacts);
+      setMyCommentStamps(JSON.parse(localStorage.getItem("sideb_comment_stamps") || "{}"));
     } catch {
       // ignore
     }
@@ -439,6 +443,52 @@ export default function ManifestoDispatch({ currentUser }: ManifestoDispatchProp
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleStampComment = async (commentId: number, stampType: "HEART" | "PLUS_ONE") => {
+    if (!visitorId) return;
+    const key = `${commentId}:${stampType}`;
+    const nextActive = !myCommentStamps[key];
+    setMyCommentStamps((prev) => {
+      const next = { ...prev, [key]: nextActive };
+      localStorage.setItem("sideb_comment_stamps", JSON.stringify(next));
+      return next;
+    });
+    setComments((prev) =>
+      prev.map((c) => {
+        if (c.id !== commentId) return c;
+        const cur = c.stampCounts || { HEART: 0, PLUS_ONE: 0 };
+        return {
+          ...c,
+          stampCounts: {
+            ...cur,
+            [stampType]: Math.max(0, cur[stampType] + (nextActive ? 1 : -1)),
+          },
+        };
+      })
+    );
+
+    try {
+      const res = await fetch("/api/manifesto", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "stamp_comment",
+          commentId,
+          stampType,
+          visitorId,
+          actorHandle: currentUser?.username || "SOMEONE",
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.stampCounts) {
+          setComments((prev) =>
+            prev.map((c) => (c.id === commentId ? { ...c, stampCounts: data.stampCounts } : c))
+          );
+        }
+      }
+    } catch {}
   };
 
   const visibleComments =
@@ -736,6 +786,35 @@ export default function ManifestoDispatch({ currentUser }: ManifestoDispatchProp
                       <p className="whitespace-pre-wrap text-xs leading-relaxed">
                         {item.message}
                       </p>
+                      <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5">
+                          {(["HEART", "PLUS_ONE"] as const).map((st) => {
+                            const key = `${item.id}:${st}`;
+                            const active = !!myCommentStamps[key];
+                            const cnt = item.stampCounts?.[st] ?? 0;
+                            return (
+                              <button
+                                key={st}
+                                type="button"
+                                onClick={() => handleStampComment(item.id, st)}
+                                className={`inline-flex items-center gap-1 border px-2 py-0.5 font-mono text-[9px] font-bold transition ${
+                                  active
+                                    ? "border-[#E11D2A] bg-[#E11D2A] text-white"
+                                    : "border-[#111111] bg-[#F4F4F0] text-[#111111] hover:bg-[#111111] hover:text-white"
+                                }`}
+                              >
+                                <span>{st === "HEART" ? "♥" : "+1"}</span>
+                                <span>{cnt}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                        {item.teamStatus && (
+                          <span className="border border-[#111111] bg-[#111111] px-2 py-0.5 font-mono text-[8px] font-bold uppercase tracking-wider text-white">
+                            {item.teamStatus}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>

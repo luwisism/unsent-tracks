@@ -24,6 +24,7 @@ import ReaderModal from "./ReaderModal";
 import ComposerModal from "./ComposerModal";
 import ProfileModal from "./ProfileModal";
 import ManifestoDispatch from "./ManifestoModal";
+import NotificationModal from "./NotificationModal";
 import AuthModal from "./AuthModal";
 import RadioBar from "./RadioBar";
 import NameVaultModal from "./NameVaultModal";
@@ -63,6 +64,8 @@ export default function SwissUnsentPlatform() {
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [isNameVaultOpen, setIsNameVaultOpen] = useState(false);
   const [isMixtapeModalOpen, setIsMixtapeModalOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [activeNote, setActiveNote] = useState<Note | null>(null);
   const [viewedProfile, setViewedProfile] = useState<UserProfile | null>(null);
 
@@ -787,6 +790,8 @@ export default function SwissUnsentPlatform() {
         onOpenComposer={() => setIsComposerOpen(true)}
         onOpenNameVault={() => setIsNameVaultOpen(true)}
         onOpenMixtapes={() => setIsMixtapeModalOpen(true)}
+        onOpenNotifications={() => setIsNotificationsOpen(true)}
+        unreadNotifications={unreadNotifications}
       />
 
       <StoriesStrip
@@ -1126,6 +1131,18 @@ export default function SwissUnsentPlatform() {
       )}
 
       <ManifestoDispatch currentUser={currentUser} />
+
+      {isNotificationsOpen && (
+        <NotificationModal
+          currentUser={currentUser}
+          onClose={() => setIsNotificationsOpen(false)}
+          onUnreadChange={setUnreadNotifications}
+          onOpenNote={(nid) => {
+            const found = notes.find((n) => n.id === nid);
+            if (found) setActiveNote(found);
+          }}
+        />
+      )}
 
       {(isAuthModalOpen || isEditProfileOpen) && (
         <AuthModal

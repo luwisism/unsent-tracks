@@ -61,7 +61,29 @@ export async function POST(
       },
     });
 
-    return NextResponse.json({ ...reply, senderBadge }, { status: 201 });
+    const parentNote = await prisma.note.findUnique({
+      where: { id: noteId },
+      select: { userId: true, recipient: true },
+    });
+    if (parentNote?.userId && (!userId || Number(userId) !== parentNote.userId)) {
+      await prisma.notification.create({
+        data: {
+          userId: parentNote.userId,
+          type: "REPLY",
+          actorHandle: resolvedHandle || "SOMEONE",
+          noteId,
+          message: track?.name
+            ? `replied with "${track.name}" on your note to ${parentNote.recipient}`
+            : `left a reply on your note to ${parentNote.recipient}`,
+        },
+      });
+    }
+
+    return NextResponse.json({
+      ...reply,
+      senderBadge,
+      stampCounts: { HEART: 0, PLUS_ONE: 0 },
+    }, { status: 201 });
   } catch {
     return NextResponse.json({ error: "Failed to post song reply." }, { status: 500 });
   }

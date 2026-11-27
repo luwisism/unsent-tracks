@@ -115,6 +115,7 @@ interface DashboardData {
     category: string;
     authorHandle: string;
     message: string;
+    teamStatus?: string | null;
     createdAt: string;
   }>;
 }
@@ -1117,7 +1118,41 @@ export default function SideBAdminPage() {
                         <td className="max-w-md whitespace-pre-wrap p-3 text-xs leading-relaxed">
                           {item.message}
                         </td>
-                        <td className="p-3 text-right">
+                        <td className="p-3 text-right whitespace-nowrap space-x-1">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              runAction(
+                                `ack-manifesto-${item.id}`,
+                                {
+                                  action: "SET_MANIFESTO_STATUS",
+                                  commentId: item.id,
+                                  teamStatus: item.teamStatus === "ACKNOWLEDGED" ? null : "ACKNOWLEDGED",
+                                },
+                                "Updated LINER // 00 status."
+                              )
+                            }
+                            className="border border-[#111111] bg-white px-2 py-1 text-[10px] font-bold uppercase hover:bg-[#111111] hover:text-white"
+                          >
+                            {item.teamStatus === "ACKNOWLEDGED" ? "UN-ACK" : "ACK"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              runAction(
+                                `ship-manifesto-${item.id}`,
+                                {
+                                  action: "SET_MANIFESTO_STATUS",
+                                  commentId: item.id,
+                                  teamStatus: item.teamStatus === "SHIPPED" ? null : "SHIPPED",
+                                },
+                                "Updated LINER // 00 shipped status."
+                              )
+                            }
+                            className="border border-[#111111] bg-white px-2 py-1 text-[10px] font-bold uppercase hover:bg-[#111111] hover:text-white"
+                          >
+                            {item.teamStatus === "SHIPPED" ? "UN-SHIP" : "SHIPPED"}
+                          </button>
                           <button
                             type="button"
                             disabled={busyKey === `del-manifesto-${item.id}`}

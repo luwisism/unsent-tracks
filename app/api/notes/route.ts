@@ -50,7 +50,7 @@ export async function GET(request: Request) {
       },
       include: {
         reactions: { select: { id: true, type: true, userId: true } },
-        replies: { orderBy: { createdAt: "asc" } },
+        replies: { orderBy: { createdAt: "asc" }, include: { reactions: { select: { type: true } } } },
         user: { select: USER_SELECT },
       },
       orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
@@ -104,7 +104,7 @@ export async function GET(request: Request) {
           where: { createdAt: { gte: yesterday }, passcode: null, isHidden: false },
           include: {
             reactions: { select: { id: true, type: true } },
-            replies: { orderBy: { createdAt: "asc" } },
+            replies: { orderBy: { createdAt: "asc" }, include: { reactions: { select: { type: true } } } },
           },
           orderBy: { createdAt: "asc" },
         },
@@ -206,7 +206,7 @@ export async function POST(request: Request) {
       },
       include: {
         reactions: { select: { id: true, type: true } },
-        replies: { orderBy: { createdAt: "asc" } },
+        replies: { orderBy: { createdAt: "asc" }, include: { reactions: { select: { type: true } } } },
         user: { select: USER_SELECT },
       },
     });

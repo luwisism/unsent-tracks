@@ -2,7 +2,7 @@
 
 import MemberBadge from "./MemberBadge";
 
-import { useState } from "react";
+import {useState, useEffect} from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { SWISS_EASE, TACTILE_SPRING } from "../utils/motion";
 import {
@@ -116,6 +116,69 @@ export default function ReaderModal({
     const res = await fetch(`/api/spotify?q=${encodeURIComponent(q)}`);
     const data = await res.json();
     setReplySongResults(data.tracks || []);
+  };
+
+  const [replyStamps, setReplyStamps] = useState<Record<number, { HEART: number; PLUS_ONE: number }>>({});
+  const [myReplyStamps, setMyReplyStamps] = useState<Record<string, boolean>>({});
+  const [visitorId, setVisitorId] = useState("");
+
+  useEffect(() => {
+    let vid = localStorage.getItem("sideb_visitor_id");
+    if (!vid) {
+      vid = `v_${Math.random().toString(36).slice(2, 11)}`;
+      localStorage.setItem("sideb_visitor_id", vid);
+    }
+    setVisitorId(vid);
+    try {
+      setMyReplyStamps(JSON.parse(localStorage.getItem("sideb_reply_stamps") || "{}"));
+    } catch {}
+    const initialMap: Record<number, { HEART: number; PLUS_ONE: number }> = {};
+    for (const rep of note.replies || []) {
+      initialMap[rep.id] = {
+        HEART: rep.stampCounts?.HEART ?? 0,
+        PLUS_ONE: rep.stampCounts?.PLUS_ONE ?? 0,
+      };
+    }
+    setReplyStamps(initialMap);
+  }, [note.id]);
+
+  const toggleReplyStamp = async (replyId: number, type: "HEART" | "PLUS_ONE") => {
+    if (!visitorId) return;
+    const key = `${replyId}:${type}`;
+    const nextActive = !myReplyStamps[key];
+    setMyReplyStamps((prev) => {
+      const updated = { ...prev, [key]: nextActive };
+      localStorage.setItem("sideb_reply_stamps", JSON.stringify(updated));
+      return updated;
+    });
+    setReplyStamps((prev) => {
+      const cur = prev[replyId] || { HEART: 0, PLUS_ONE: 0 };
+      return {
+        ...prev,
+        [replyId]: {
+          ...cur,
+          [type]: Math.max(0, cur[type] + (nextActive ? 1 : -1)),
+        },
+      };
+    });
+
+    try {
+      const res = await fetch(`/api/notes/${note.id}/replies/${replyId}/react`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type,
+          visitorId,
+          actorHandle: currentUser?.username || "SOMEONE",
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.counts) {
+          setReplyStamps((prev) => ({ ...prev, [replyId]: data.counts }));
+        }
+      }
+    } catch {}
   };
 
   const canSubmitReply =
@@ -714,6 +777,28 @@ export default function ReaderModal({
                             {hasSong ? `“${commentText}”` : commentText}
                           </p>
                         )}
+                        <div className="mt-1.5 flex items-center gap-1.5">
+                          {(["HEART", "PLUS_ONE"] as const).map((stType) => {
+                            const stampKey = `${rep.id}:${stType}`;
+                            const active = !!myReplyStamps[stampKey];
+                            const cnt = replyStamps[rep.id]?.[stType] ?? rep.stampCounts?.[stType] ?? 0;
+                            return (
+                              <button
+                                key={stType}
+                                type="button"
+                                onClick={() => toggleReplyStamp(rep.id, stType)}
+                                className={`inline-flex items-center gap-1 border px-1.5 py-0.5 font-mono text-[9px] font-bold transition ${
+                                  active
+                                    ? "border-[#E11D2A] bg-[#E11D2A] text-white"
+                                    : "border-current/35 bg-transparent hover:bg-current/10"
+                                }`}
+                              >
+                                <span>{stType === "HEART" ? "♥" : "+1"}</span>
+                                <span>{cnt}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
                         <p className="mt-1 font-mono text-[9px] uppercase opacity-65">
                           {handle ? `@${handle}` : "ANONYMOUS LISTENER"}
                         </p>

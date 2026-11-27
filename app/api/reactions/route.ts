@@ -69,8 +69,19 @@ export async function POST(request: Request) {
       try {
         const note = await prisma.note.findUnique({
           where: { id: noteId },
-          select: { recipient: true },
+          select: { recipient: true, userId: true },
         });
+        if (note?.userId && note.userId !== actor.id) {
+          await prisma.notification.create({
+            data: {
+              userId: note.userId,
+              type: "REACTION",
+              actorHandle: actor.username,
+              noteId,
+              message: `sent ${type} on your note to ${note.recipient}`,
+            },
+          });
+        }
         await prisma.activity.create({
           data: {
             userId: actor.id,

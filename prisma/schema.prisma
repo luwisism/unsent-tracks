@@ -32,6 +32,7 @@ model User {
   followers     Follow[]   @relation("UserFollowing")
   following     Follow[]   @relation("UserFollowers")
   activities    Activity[] @relation("UserActivities")
+  notifications Notification[]
 
 }
 
@@ -62,6 +63,7 @@ model Note {
   reactions    Reaction[]
   replies      SongReply[]
   mixtapeItems MixtapeItem[]
+  notifications Notification[]
   createdAt    DateTime      @default(now())
   activities    Activity[]
 
@@ -88,6 +90,7 @@ model SongReply {
   lyricExcerpt String?
   senderHandle String?
   createdAt    DateTime @default(now())
+  reactions    ReplyReaction[]
 }
 
 model Mixtape {
@@ -178,5 +181,43 @@ model ManifestoComment {
   category     String   @default("COMMENT") // COMMENT | SUGGESTION | BUG
   authorHandle String   @default("ANONYMOUS")
   message      String
+  teamStatus   String?  // ACKNOWLEDGED | SHIPPED | null
   createdAt    DateTime @default(now())
+  reactions    ManifestoCommentReaction[]
+}
+
+
+model ReplyReaction {
+  id        Int       @id @default(autoincrement())
+  type      String    // HEART | PLUS_ONE
+  visitorId String
+  replyId   Int
+  reply     SongReply @relation(fields: [replyId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+
+  @@unique([replyId, type, visitorId])
+}
+
+model ManifestoCommentReaction {
+  id        Int              @id @default(autoincrement())
+  type      String           // HEART | PLUS_ONE
+  visitorId String
+  commentId Int
+  comment   ManifestoComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  createdAt DateTime         @default(now())
+
+  @@unique([commentId, type, visitorId])
+}
+
+model Notification {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String   // REACTION | REPLY | COMMENT_STAMP | FOLLOW | TEAM_STATUS
+  actorHandle String   @default("SOMEONE")
+  noteId      Int?
+  note        Note?    @relation(fields: [noteId], references: [id], onDelete: SetNull)
+  message     String
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
 }

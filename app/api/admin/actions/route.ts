@@ -171,6 +171,41 @@ export async function POST(request: Request) {
         return NextResponse.json({ success: true });
       }
 
+      case "SET_MANIFESTO_STATUS": {
+        const commentId = Number(body.commentId);
+        const rawStatus = String(body.teamStatus || "").toUpperCase();
+        const nextStatus = ["ACKNOWLEDGED", "SHIPPED"].includes(rawStatus) ? rawStatus : null;
+        const item = await prisma.manifestoComment.findUnique({ where: { id: commentId } });
+        if (!item) return NextResponse.json({ error: "Comment not found." }, { status: 404 });
+        await prisma.manifestoComment.update({
+          where: { id: commentId },
+          data: { teamStatus: nextStatus },
+        });
+        if (nextStatus && item.authorHandle && item.authorHandle !== "ANONYMOUS") {
+          const handle = item.authorHandle.replace(/^@+/, "").toLowerCase();
+          const u = await prisma.user.findUnique({ where: { username: handle }, select: { id: true } });
+          if (u) {
+            await prisma.notification.create({
+              data: {
+                userId: u.id,
+                type: "TEAM_STATUS",
+                actorHandle: "TEAM BCKN",
+                message: `marked your LINER // 00 post as ${nextStatus}`,
+              },
+            });
+          }
+        }
+        await logAdminAction({
+          actor: admin.username,
+          action: "SET_MANIFESTO_STATUS",
+          targetType: "MANIFESTO",
+          targetId: String(commentId),
+          details: nextStatus ? `Status: ${nextStatus}` : "Cleared status",
+          ipAddress: ip,
+        });
+        return NextResponse.json({ success: true });
+      }
+
       case "DELETE_MANIFESTO_COMMENT": {
         const commentId = Number(body.commentId);
         const item = await prisma.manifestoComment.findUnique({ where: { id: commentId } });

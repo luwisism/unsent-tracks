@@ -13,6 +13,7 @@ import {
   CassetteTape,
   Menu,
   X,
+  Bell,
 } from "lucide-react";
 import { UserProfile } from "../types/archive";
 import { getContrastText, getMonogram } from "../utils/poster";
@@ -33,6 +34,8 @@ interface NavbarProps {
   onOpenComposer: () => void;
   onOpenNameVault: () => void;
   onOpenMixtapes: () => void;
+  onOpenNotifications?: () => void;
+  unreadNotifications?: number;
 }
 
 export default function Navbar({
@@ -50,6 +53,8 @@ export default function Navbar({
   onOpenComposer,
   onOpenNameVault,
   onOpenMixtapes,
+  onOpenNotifications,
+  unreadNotifications = 0,
 }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -141,6 +146,21 @@ export default function Navbar({
                 </span>
                 @{currentUser.username}
               </button>
+              {onOpenNotifications && (
+                <button
+                  type="button"
+                  onClick={onOpenNotifications}
+                  title="Signal Alerts"
+                  className={`relative ${iconOnlyBtn}`}
+                >
+                  <Bell className="h-3.5 w-3.5" />
+                  {unreadNotifications > 0 && (
+                    <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center bg-[#E11D2A] px-1 font-mono text-[9px] font-bold text-white">
+                      {unreadNotifications > 9 ? "9+" : unreadNotifications}
+                    </span>
+                  )}
+                </button>
+              )}
               <button
                 onClick={onLogout}
                 title="Sign Out"

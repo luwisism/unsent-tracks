@@ -27,6 +27,7 @@ export interface SongReply {
   lyricExcerpt: string | null;
   senderHandle: string | null;
   senderBadge?: string | null;
+  stampCounts?: { HEART: number; PLUS_ONE: number };
   createdAt: string;
 }
 
