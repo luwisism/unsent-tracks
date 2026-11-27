@@ -3,7 +3,8 @@
 import MemberBadge from "./MemberBadge";
 
 import { motion } from "motion/react";
-import { Play, Pause, Lock, Disc, Flame, KeyRound } from "lucide-react";
+import { Play, Pause, Lock, Flame, KeyRound } from "lucide-react";
+import { CubeGuyIcon } from "./ManifestoModal";
 import { TACTILE_SPRING } from "../utils/motion";
 import { Note } from "../types/archive";
 import { formatCountdown, formatIndex, getContrastText, getMonogram } from "../utils/poster";
@@ -122,7 +123,7 @@ export default function NoteCard({
               <span className="flex items-center gap-2 opacity-85">
                 {replyCount > 0 && (
                   <span className="inline-flex items-center gap-0.5">
-                    <Disc className="h-3 w-3" /> {replyCount}
+                    <CubeGuyIcon compact className="h-3 w-3" /> {replyCount}
                   </span>
                 )}
                 <span>♥ {totalSignals}</span>

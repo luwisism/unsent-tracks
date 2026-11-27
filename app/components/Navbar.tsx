@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { UserProfile } from "../types/archive";
 import { getContrastText, getMonogram } from "../utils/poster";
+import { CubeGuyIcon } from "./ManifestoModal";
 
 interface NavbarProps {
   darkMode: boolean;
@@ -111,7 +112,7 @@ export default function Navbar({
               vinylMode ? "border-[#0047AB] bg-[#0047AB] text-white" : btnBase
             }`}
           >
-            <Disc className={`h-3.5 w-3.5 ${vinylMode ? "animate-spin" : ""}`} />
+            <CubeGuyIcon compact className={`h-3.5 w-3.5 ${vinylMode ? "animate-spin" : ""}`} />
             Vinyl
           </button>
 
@@ -223,7 +224,7 @@ export default function Navbar({
                   : "border-current/30 bg-white/5"
               }`}
             >
-              <Disc className={`h-3.5 w-3.5 ${vinylMode ? "animate-spin" : ""}`} />
+              <CubeGuyIcon compact className={`h-3.5 w-3.5 ${vinylMode ? "animate-spin" : ""}`} />
               Vinyl Audio
             </button>
           </div>

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Check, MapPin, Tag, Plus, ArrowRight, ArrowLeft, Disc } from "lucide-react";
+import { X, Check, MapPin, Tag, Plus, ArrowRight, ArrowLeft } from "lucide-react";
+import { CubeGuyIcon } from "./ManifestoModal";
 import { SUGGESTED_TAGS, SWISS_SWATCHES, Track, UserProfile } from "../types/archive";
 import { getContrastText, getMonogram } from "../utils/poster";
 
@@ -625,7 +626,7 @@ export default function AuthModal({
 
                 <div>
                   <label className="mb-1.5 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.15em]">
-                    <Disc className="h-3.5 w-3.5 text-[#E11D2A]" /> Pinned Profile Anthem (Optional)
+                    <CubeGuyIcon compact className="h-3.5 w-3.5 text-[#E11D2A]" /> Pinned Profile Anthem (Optional)
                   </label>
                   {selectedAnthem ? (
                     <div className="flex items-center justify-between border border-[#111111] bg-white p-2.5">

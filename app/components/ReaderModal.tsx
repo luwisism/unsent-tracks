@@ -12,12 +12,12 @@ import {
   Download,
   Share2,
   Check,
-  Disc,
   Send,
   Flame,
   KeyRound,
   MessageSquare,
 } from "lucide-react";
+import { CubeGuyIcon } from "./ManifestoModal";
 import { Note, SIGNAL_TYPES, Track, UserProfile } from "../types/archive";
 import { downloadSwissPoster, getContrastText, renderSwissPosterFile } from "../utils/poster";
 import { shareSideBLink, shareSideBStoryFile } from "../utils/share";

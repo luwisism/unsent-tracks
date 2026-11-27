@@ -34,14 +34,22 @@ const REACTION_ITEMS = [
   { key: "CO_SIGN", label: "CO-SIGN TEAM" },
 ] as const;
 
-export function SquareEyeAvatar({ className = "h-16 w-16" }: { className?: string }) {
+export function CubeGuyIcon({
+  className = "h-16 w-16",
+  interactive = true,
+  compact = false,
+}: {
+  className?: string;
+  interactive?: boolean;
+  compact?: boolean;
+}) {
   const boxRef = useRef<HTMLDivElement | null>(null);
   const [pupilOffset, setPupilOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isBlinking, setIsBlinking] = useState(false);
   const [isWinking, setIsWinking] = useState(false);
 
-  // Track cursor / touch pointer smoothly relative to the square head
   useEffect(() => {
+    if (!interactive || compact) return;
     const handleMove = (clientX: number, clientY: number) => {
       const el = boxRef.current;
       if (!el) return;
@@ -70,18 +78,18 @@ export function SquareEyeAvatar({ className = "h-16 w-16" }: { className?: strin
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("touchmove", onTouchMove);
     };
-  }, []);
+  }, [interactive, compact]);
 
-  // Natural periodic double/single blink loop
   useEffect(() => {
+    if (!interactive) return;
     let timer: ReturnType<typeof setTimeout>;
     const scheduleBlink = () => {
-      const delay = 2400 + Math.random() * 2600;
+      const delay = 2200 + Math.random() * 2800;
       timer = setTimeout(() => {
         setIsBlinking(true);
         setTimeout(() => {
           setIsBlinking(false);
-          if (Math.random() < 0.28) {
+          if (Math.random() < 0.25) {
             setTimeout(() => {
               setIsBlinking(true);
               setTimeout(() => setIsBlinking(false), 110);
@@ -93,40 +101,54 @@ export function SquareEyeAvatar({ className = "h-16 w-16" }: { className?: strin
     };
     scheduleBlink();
     return () => clearTimeout(timer);
-  }, []);
+  }, [interactive]);
 
-  const triggerWink = () => {
+  const triggerWink = (e: React.MouseEvent) => {
+    if (!interactive) return;
+    e.stopPropagation();
     setIsWinking(true);
     setTimeout(() => setIsWinking(false), 320);
   };
+
+  if (compact) {
+    return (
+      <span
+        aria-hidden="true"
+        className={`inline-flex shrink-0 items-center justify-center border border-current bg-transparent ${className}`}
+      >
+        <span className="flex items-center gap-[2px]">
+          <span className="block h-[5px] w-[3px] bg-current" />
+          <span className="block h-[5px] w-[3px] bg-current" />
+        </span>
+      </span>
+    );
+  }
 
   return (
     <div
       ref={boxRef}
       onClick={triggerWink}
-      title="Tap to wink"
+      title={interactive ? "Tap Cube Guy to wink" : undefined}
       role="img"
-      aria-label="Minimalist square character with animated eyes"
-      className={`relative flex cursor-pointer select-none items-center justify-center border-2 border-current bg-transparent transition-transform active:scale-95 ${className}`}
+      aria-label="Cube Guy mascot with animated eyes"
+      className={`relative flex select-none items-center justify-center border-2 border-current bg-transparent transition-transform active:scale-95 ${
+        interactive ? "cursor-pointer" : ""
+      } ${className}`}
     >
-      {/* Corner pixel registration ticks */}
       <span className="absolute left-1 top-1 h-1 w-1 bg-current opacity-60" />
       <span className="absolute right-1 top-1 h-1 w-1 bg-current opacity-60" />
 
-      {/* Two expressive eyes that follow pointer, blink, and wink */}
       <div
         style={{
           transform: `translate(${pupilOffset.x}px, ${pupilOffset.y}px)`,
         }}
         className="flex items-center gap-3.5 transition-transform duration-75 ease-out"
       >
-        {/* Left Eye */}
         <span
           className={`block w-2 bg-current transition-all duration-100 ${
             isBlinking ? "h-[2px]" : "h-3.5"
           }`}
         />
-        {/* Right Eye (closes into a flat bar on wink) */}
         <span
           className={`block w-2 bg-current transition-all duration-100 ${
             isBlinking || isWinking ? "h-[2px]" : "h-3.5"
@@ -355,7 +377,7 @@ export default function ManifestoDispatch({ currentUser }: ManifestoDispatchProp
         }`}
       >
         <GripVertical className="h-3.5 w-3.5 opacity-45" />
-        <span className="h-2 w-2 rounded-full bg-[#E11D2A]" />
+        <CubeGuyIcon className="h-4 w-4" />
         <span className="font-mono text-[10px] font-bold uppercase tracking-[0.18em]">
           LINER // 00
         </span>
@@ -375,7 +397,7 @@ export default function ManifestoDispatch({ currentUser }: ManifestoDispatchProp
             <div className="mb-5 flex items-start justify-between gap-3 border-b border-[#111111] pb-4">
               <div>
                 <span className="flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-[#E11D2A]">
-                  <Sparkles className="h-3.5 w-3.5" /> PINNED DISPATCH // ENTRY NO. 000
+                  <CubeGuyIcon compact className="h-3.5 w-3.5" /> PINNED DISPATCH // ENTRY NO. 000
                 </span>
                 <h2 className="mt-1 text-2xl font-bold uppercase tracking-tight">
                   ABOUT SIDE B // 026
@@ -428,7 +450,7 @@ export default function ManifestoDispatch({ currentUser }: ManifestoDispatchProp
 
                 {/* Pure Monochrome Vector (inherits currentColor: white on dark, black on light) */}
                 <div className="flex shrink-0 flex-col items-center justify-center border border-current/30 px-4 py-3 text-[#F4F4F0]">
-                  <SquareEyeAvatar className="h-16 w-16" />
+                  <CubeGuyIcon className="h-16 w-16" />
                   <span className="mt-1 font-mono text-[9px] uppercase tracking-widest opacity-75">
                     PEACE // TEAM BCKN
                   </span>
