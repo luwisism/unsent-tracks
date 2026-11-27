@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { Note, SIGNAL_TYPES, Track, UserProfile } from "../types/archive";
 import { downloadSwissPoster, getContrastText, renderSwissPosterFile } from "../utils/poster";
+import { shareSideBLink, shareSideBStoryFile } from "../utils/share";
 
 interface ReaderModalProps {
   note: Note;
@@ -151,45 +152,26 @@ export default function ReaderModal({
     setSubmittingReply(false);
   };
 
-  const copyUrlToClipboard = async (url: string) => {
-    try {
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(url);
-      } else {
-        const textArea = document.createElement("textarea");
-        textArea.value = url;
-        textArea.style.position = "fixed";
-        textArea.style.left = "-9999px";
-        document.body.appendChild(textArea);
-        textArea.select();
-        document.execCommand("copy");
-        document.body.removeChild(textArea);
-      }
-    } catch (err) {
-      console.error("Failed to copy share link:", err);
-    }
+  const noteShareTarget = {
+    kind: "note" as const,
+    id: note.id,
+    recipient: note.recipient,
   };
 
   const handleNativeLinkShare = async () => {
-    const url = `${window.location.origin}/?note=${note.id}`;
-    const title = `TO: ${note.recipient} — SIDE B #${String(note.id).padStart(3, "0")}`;
-    if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
-      try {
-        await navigator.share({ title, url });
+    const result = await shareSideBLink(noteShareTarget);
+    if (result === "cancelled") return;
+    if (result === "copied") {
+      setCopiedLink(true);
+      setShareStatus("Link copied");
+      setTimeout(() => {
+        setCopiedLink(false);
+        setShareStatus(null);
         setShowShareMenu(false);
-        return;
-      } catch (err) {
-        if ((err as { name?: string })?.name === "AbortError") return;
-      }
-    }
-    await copyUrlToClipboard(url);
-    setCopiedLink(true);
-    setShareStatus("Link copied");
-    setTimeout(() => {
-      setCopiedLink(false);
-      setShareStatus(null);
+      }, 1800);
+    } else {
       setShowShareMenu(false);
-    }, 1800);
+    }
   };
 
   const handleShareStoryCard = async () => {
@@ -199,31 +181,17 @@ export default function ReaderModal({
     }
     setSharingStory(true);
     setShareStatus("Rendering 9:16 card...");
-    const url = `${window.location.origin}/?note=${note.id}`;
-    await copyUrlToClipboard(url);
-
     try {
       const file = await renderSwissPosterFile(note);
-      const nav = navigator as Navigator & {
-        canShare?: (data?: ShareData) => boolean;
-      };
-      if (
-        file &&
-        typeof nav.share === "function" &&
-        (!nav.canShare || nav.canShare({ files: [file] }))
-      ) {
-        setShareStatus("Link copied for IG Link Sticker");
-        await nav.share({ files: [file] });
-        setShowShareMenu(false);
-      } else {
-        await downloadSwissPoster(note);
+      setShareStatus("Link copied for IG Link Sticker");
+      const result = await shareSideBStoryFile(noteShareTarget, file, () =>
+        downloadSwissPoster(note)
+      );
+      if (result === "downloaded") {
         setShareStatus("Link copied + 9:16 PNG saved");
         setTimeout(() => setShowShareMenu(false), 1800);
-      }
-    } catch (err) {
-      if ((err as { name?: string })?.name !== "AbortError") {
-        await downloadSwissPoster(note);
-        setShareStatus("9:16 PNG saved");
+      } else if (result === "shared") {
+        setShowShareMenu(false);
       }
     } finally {
       setSharingStory(false);

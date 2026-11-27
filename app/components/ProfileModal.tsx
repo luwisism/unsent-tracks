@@ -19,6 +19,7 @@ import {
   Volume2,
   MapPin,
   Clock,
+  Share2,
 } from "lucide-react";
 import { Note, UserProfile } from "../types/archive";
 import {
@@ -27,6 +28,7 @@ import {
   getContrastText,
   getMonogram,
 } from "../utils/poster";
+import { shareSideBLink } from "../utils/share";
 
 interface ProfileModalProps {
   profile: UserProfile & {
@@ -107,6 +109,7 @@ export default function ProfileModal({
   const [pinBusy, setPinBusy] = useState(false);
   const [liveBadge, setLiveBadge] = useState<string | null | undefined>(profile.badge);
   const [exportingPoster, setExportingPoster] = useState(false);
+  const [profileLinkCopied, setProfileLinkCopied] = useState(false);
 
   const isOwnProfile = currentUser?.username === profile.username;
   const surfaceBg = profile.monogramColor || "#111111";
