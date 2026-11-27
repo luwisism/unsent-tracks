@@ -25,7 +25,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
-type TabKey = "notes" | "users" | "mixtapes" | "settings" | "security" | "audit";
+type TabKey = "notes" | "users" | "mixtapes" | "settings" | "security" | "audit" | "manifesto";
 
 interface AdminReply {
   id: number;
@@ -109,6 +109,14 @@ interface DashboardData {
     maintenance_banner: string;
   };
   auditLogs: AuditEntry[];
+  manifestoReactions?: Record<string, number>;
+  manifestoComments?: Array<{
+    id: number;
+    category: string;
+    authorHandle: string;
+    message: string;
+    createdAt: string;
+  }>;
 }
 
 export default function SideBAdminPage() {
@@ -122,6 +130,7 @@ export default function SideBAdminPage() {
   const [activeTab, setActiveTab] = useState<TabKey>("notes");
   const [searchTerm, setSearchTerm] = useState("");
   const [noteFilter, setNoteFilter] = useState<"all" | "featured" | "hidden">("all");
+  const [manifestoFilter, setManifestoFilter] = useState<"ALL" | "COMMENT" | "SUGGESTION" | "BUG">("ALL");
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [toast, setToast] = useState<{ type: "ok" | "err"; text: string } | null>(null);
 
@@ -463,6 +472,7 @@ export default function SideBAdminPage() {
                 { id: "mixtapes", label: "MIXTAPES", icon: Disc },
                 { id: "settings", label: "SYSTEM LOCKS", icon: Sliders },
                 { id: "security", label: "CREDENTIALS", icon: KeyRound },
+                { id: "manifesto", label: "LINER // 00", icon: MessageSquare },
                 { id: "audit", label: "AUDIT LOG", icon: History },
               ] as const
             ).map((tab) => {
@@ -1022,6 +1032,114 @@ export default function SideBAdminPage() {
               {busyKey === "rotate-creds" ? "ROTATING..." : "SAVE & ROTATE SESSION"}
             </button>
           </form>
+        )}
+
+        {activeTab === "manifesto" && (
+          <div className="space-y-5">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {(
+                [
+                  { key: "RESONATES", label: "RESONATES" },
+                  { key: "NEW_TRACK", label: "FOUND NEW MUSIC" },
+                  { key: "FREE_SPACE", label: "LOVE THAT IT'S FREE" },
+                  { key: "CO_SIGN", label: "CO-SIGN TEAM" },
+                ] as const
+              ).map((r) => (
+                <div
+                  key={r.key}
+                  className="border-2 border-[#111111] bg-white p-4 shadow-[4px_4px_0px_#111111]"
+                >
+                  <p className="font-mono text-[10px] font-bold uppercase tracking-widest opacity-65">
+                    {r.label}
+                  </p>
+                  <p className="mt-1 font-mono text-2xl font-bold">
+                    {data.manifestoReactions?.[r.key] ?? 0}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-2 border border-[#111111] bg-white p-3">
+              <span className="font-mono text-[10px] font-bold uppercase tracking-widest">
+                DISPATCH BOARD ({(data.manifestoComments || []).length} TOTAL)
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {(["ALL", "COMMENT", "SUGGESTION", "BUG"] as const).map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setManifestoFilter(cat)}
+                    className={`border border-[#111111] px-2.5 py-1 font-mono text-[10px] font-bold uppercase ${
+                      manifestoFilter === cat
+                        ? "bg-[#111111] text-white"
+                        : "bg-[#F4F4F0] text-[#111111] hover:bg-neutral-200"
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="overflow-x-auto border border-[#111111] bg-white">
+              <table className="w-full border-collapse text-left font-mono text-xs">
+                <thead>
+                  <tr className="border-b border-[#111111] bg-[#111111] text-[10px] uppercase text-white">
+                    <th className="p-3">DATE</th>
+                    <th className="p-3">TYPE</th>
+                    <th className="p-3">AUTHOR</th>
+                    <th className="p-3">MESSAGE</th>
+                    <th className="p-3 text-right">ACTION</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(data.manifestoComments || [])
+                    .filter((item) => manifestoFilter === "ALL" || item.category === manifestoFilter)
+                    .map((item) => (
+                      <tr key={item.id} className="border-b border-neutral-200 align-top">
+                        <td className="whitespace-nowrap p-3 text-[11px] opacity-70">
+                          {new Date(item.createdAt).toLocaleString()}
+                        </td>
+                        <td className="p-3">
+                          <span
+                            className={`border border-[#111111] px-1.5 py-0.5 text-[10px] font-bold uppercase ${
+                              item.category === "BUG"
+                                ? "bg-[#E11D2A] text-white"
+                                : item.category === "SUGGESTION"
+                                ? "bg-[#111111] text-white"
+                                : "bg-[#F4F4F0] text-[#111111]"
+                            }`}
+                          >
+                            {item.category}
+                          </span>
+                        </td>
+                        <td className="p-3 font-bold">{item.authorHandle}</td>
+                        <td className="max-w-md whitespace-pre-wrap p-3 text-xs leading-relaxed">
+                          {item.message}
+                        </td>
+                        <td className="p-3 text-right">
+                          <button
+                            type="button"
+                            disabled={busyKey === `del-manifesto-${item.id}`}
+                            onClick={() =>
+                              runAction(
+                                `del-manifesto-${item.id}`,
+                                { action: "DELETE_MANIFESTO_COMMENT", commentId: item.id },
+                                "Deleted dispatch entry."
+                              )
+                            }
+                            className="inline-flex items-center gap-1 border border-[#111111] bg-white px-2 py-1 text-[10px] font-bold uppercase text-[#E11D2A] hover:bg-[#E11D2A] hover:text-white"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                            DELETE
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         )}
 
         {activeTab === "audit" && (

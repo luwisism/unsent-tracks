@@ -34,38 +34,106 @@ const REACTION_ITEMS = [
   { key: "CO_SIGN", label: "CO-SIGN TEAM" },
 ] as const;
 
-export function PeaceGuyVector({ className = "h-16 w-16" }: { className?: string }) {
+export function SquareEyeAvatar({ className = "h-16 w-16" }: { className?: string }) {
+  const boxRef = useRef<HTMLDivElement | null>(null);
+  const [pupilOffset, setPupilOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [isBlinking, setIsBlinking] = useState(false);
+  const [isWinking, setIsWinking] = useState(false);
+
+  // Track cursor / touch pointer smoothly relative to the square head
+  useEffect(() => {
+    const handleMove = (clientX: number, clientY: number) => {
+      const el = boxRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const dx = clientX - cx;
+      const dy = clientY - cy;
+      const dist = Math.hypot(dx, dy) || 1;
+      const maxShift = 4.5;
+      const scale = Math.min(1, dist / 140) * maxShift;
+      setPupilOffset({
+        x: Math.round((dx / dist) * scale * 10) / 10,
+        y: Math.round((dy / dist) * scale * 10) / 10,
+      });
+    };
+
+    const onMouseMove = (e: MouseEvent) => handleMove(e.clientX, e.clientY);
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.touches[0]) handleMove(e.touches[0].clientX, e.touches[0].clientY);
+    };
+
+    window.addEventListener("mousemove", onMouseMove, { passive: true });
+    window.addEventListener("touchmove", onTouchMove, { passive: true });
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("touchmove", onTouchMove);
+    };
+  }, []);
+
+  // Natural periodic double/single blink loop
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    const scheduleBlink = () => {
+      const delay = 2400 + Math.random() * 2600;
+      timer = setTimeout(() => {
+        setIsBlinking(true);
+        setTimeout(() => {
+          setIsBlinking(false);
+          if (Math.random() < 0.28) {
+            setTimeout(() => {
+              setIsBlinking(true);
+              setTimeout(() => setIsBlinking(false), 110);
+            }, 130);
+          }
+          scheduleBlink();
+        }, 120);
+      }, delay);
+    };
+    scheduleBlink();
+    return () => clearTimeout(timer);
+  }, []);
+
+  const triggerWink = () => {
+    setIsWinking(true);
+    setTimeout(() => setIsWinking(false), 320);
+  };
+
   return (
-    <svg
-      viewBox="0 0 16 16"
-      fill="currentColor"
-      shapeRendering="crispEdges"
-      aria-label="8-bit character making a peace sign"
-      className={className}
+    <div
+      ref={boxRef}
+      onClick={triggerWink}
+      title="Tap to wink"
+      role="img"
+      aria-label="Minimalist square character with animated eyes"
+      className={`relative flex cursor-pointer select-none items-center justify-center border-2 border-current bg-transparent transition-transform active:scale-95 ${className}`}
     >
-      {/* Hair & head silhouette */}
-      <rect x="4" y="2" width="7" height="1" />
-      <rect x="3" y="3" width="9" height="1" />
-      <rect x="3" y="4" width="2" height="4" />
-      <rect x="10" y="4" width="2" height="4" />
-      <rect x="4" y="8" width="7" height="1" />
+      {/* Corner pixel registration ticks */}
+      <span className="absolute left-1 top-1 h-1 w-1 bg-current opacity-60" />
+      <span className="absolute right-1 top-1 h-1 w-1 bg-current opacity-60" />
 
-      {/* Eyes & smile */}
-      <rect x="5" y="5" width="1" height="2" />
-      <rect x="9" y="5" width="1" height="2" />
-      <rect x="6" y="7" width="3" height="1" />
-
-      {/* Shoulders / torso */}
-      <rect x="3" y="10" width="9" height="4" />
-      <rect x="2" y="12" width="1" height="2" />
-      <rect x="12" y="12" width="1" height="2" />
-
-      {/* Raised hand doing a peace sign */}
-      <rect x="12" y="4" width="1" height="3" />
-      <rect x="14" y="4" width="1" height="3" />
-      <rect x="12" y="7" width="3" height="3" />
-      <rect x="12" y="10" width="2" height="2" />
-    </svg>
+      {/* Two expressive eyes that follow pointer, blink, and wink */}
+      <div
+        style={{
+          transform: `translate(${pupilOffset.x}px, ${pupilOffset.y}px)`,
+        }}
+        className="flex items-center gap-3.5 transition-transform duration-75 ease-out"
+      >
+        {/* Left Eye */}
+        <span
+          className={`block w-2 bg-current transition-all duration-100 ${
+            isBlinking ? "h-[2px]" : "h-3.5"
+          }`}
+        />
+        {/* Right Eye (closes into a flat bar on wink) */}
+        <span
+          className={`block w-2 bg-current transition-all duration-100 ${
+            isBlinking || isWinking ? "h-[2px]" : "h-3.5"
+          }`}
+        />
+      </div>
+    </div>
   );
 }
 
@@ -360,7 +428,7 @@ export default function ManifestoDispatch({ currentUser }: ManifestoDispatchProp
 
                 {/* Pure Monochrome Vector (inherits currentColor: white on dark, black on light) */}
                 <div className="flex shrink-0 flex-col items-center justify-center border border-current/30 px-4 py-3 text-[#F4F4F0]">
-                  <PeaceGuyVector className="h-16 w-16" />
+                  <SquareEyeAvatar className="h-16 w-16" />
                   <span className="mt-1 font-mono text-[9px] uppercase tracking-widest opacity-75">
                     PEACE // TEAM BCKN
                   </span>

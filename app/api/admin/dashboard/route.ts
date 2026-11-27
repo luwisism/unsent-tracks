@@ -23,6 +23,8 @@ export async function GET() {
       mixtapes,
       settingsRows,
       auditLogs,
+      manifestoReactionGroups,
+      manifestoComments,
     ] = await Promise.all([
       prisma.user.count(),
       prisma.user.count({ where: { isSuspended: true } }),
@@ -71,6 +73,14 @@ export async function GET() {
         orderBy: { createdAt: "desc" },
         take: 100,
       }),
+      prisma.manifestoReaction.groupBy({
+        by: ["type"],
+        _count: { type: true },
+      }),
+      prisma.manifestoComment.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 200,
+      }),
     ]);
 
     const settings: Record<string, string> = {
@@ -80,6 +90,16 @@ export async function GET() {
     };
     for (const row of settingsRows) {
       settings[row.key] = row.value;
+    }
+
+    const manifestoReactions: Record<string, number> = {
+      RESONATES: 0,
+      NEW_TRACK: 0,
+      FREE_SPACE: 0,
+      CO_SIGN: 0,
+    };
+    for (const r of manifestoReactionGroups) {
+      manifestoReactions[r.type] = r._count.type;
     }
 
     return NextResponse.json({
@@ -99,6 +119,8 @@ export async function GET() {
       mixtapes,
       settings,
       auditLogs,
+      manifestoReactions,
+      manifestoComments,
     });
   } catch {
     return NextResponse.json({ error: "Failed to load admin telemetry." }, { status: 500 });

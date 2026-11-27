@@ -171,6 +171,22 @@ export async function POST(request: Request) {
         return NextResponse.json({ success: true });
       }
 
+      case "DELETE_MANIFESTO_COMMENT": {
+        const commentId = Number(body.commentId);
+        const item = await prisma.manifestoComment.findUnique({ where: { id: commentId } });
+        if (!item) return NextResponse.json({ error: "Comment not found." }, { status: 404 });
+        await prisma.manifestoComment.delete({ where: { id: commentId } });
+        await logAdminAction({
+          actor: admin.username,
+          action: "DELETE_MANIFESTO_COMMENT",
+          targetType: "MANIFESTO",
+          targetId: String(commentId),
+          details: `Deleted ${item.category} from ${item.authorHandle}`,
+          ipAddress: ip,
+        });
+        return NextResponse.json({ success: true });
+      }
+
       case "DELETE_MIXTAPE": {
         const mixtapeId = Number(body.mixtapeId);
         const mixtape = await prisma.mixtape.findUnique({ where: { id: mixtapeId } });
