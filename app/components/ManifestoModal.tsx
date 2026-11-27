@@ -34,6 +34,68 @@ const REACTION_ITEMS = [
   { key: "CO_SIGN", label: "CO-SIGN TEAM" },
 ] as const;
 
+export function CubeEyesIcon({ className = "h-3.5 w-3.5" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 16 12"
+      fill="currentColor"
+      shapeRendering="crispEdges"
+      aria-hidden="true"
+      className={`inline-block shrink-0 ${className}`}
+    >
+      <rect x="2" y="2" width="3" height="8" />
+      <rect x="11" y="2" width="3" height="8" />
+    </svg>
+  );
+}
+
+export function FloatingEyesOnly({ onWink }: { onWink?: () => void }) {
+  const [blinking, setBlinking] = useState(false);
+  const [winking, setWinking] = useState(false);
+
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    const schedule = () => {
+      timer = setTimeout(() => {
+        setBlinking(true);
+        setTimeout(() => {
+          setBlinking(false);
+          schedule();
+        }, 120);
+      }, 2500 + Math.random() * 2400);
+    };
+    schedule();
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setWinking(true);
+    setTimeout(() => setWinking(false), 300);
+    onWink?.();
+  };
+
+  return (
+    <span
+      onClick={handleClick}
+      role="img"
+      aria-label="Expressive eyes"
+      className="inline-flex items-center gap-1.5 px-0.5 text-current"
+    >
+      <span
+        className={`block w-1.5 bg-current transition-all duration-100 ${
+          blinking ? "h-[2px]" : "h-3"
+        }`}
+      />
+      <span
+        className={`block w-1.5 bg-current transition-all duration-100 ${
+          blinking || winking ? "h-[2px]" : "h-3"
+        }`}
+      />
+    </span>
+  );
+}
+
 export function CubeGuyIcon({
   className = "h-16 w-16",
   interactive = true,
@@ -377,7 +439,7 @@ export default function ManifestoDispatch({ currentUser }: ManifestoDispatchProp
         }`}
       >
         <GripVertical className="h-3.5 w-3.5 opacity-45" />
-        <CubeGuyIcon className="h-4 w-4" />
+        <FloatingEyesOnly />
         <span className="font-mono text-[10px] font-bold uppercase tracking-[0.18em]">
           LINER // 00
         </span>
@@ -397,7 +459,7 @@ export default function ManifestoDispatch({ currentUser }: ManifestoDispatchProp
             <div className="mb-5 flex items-start justify-between gap-3 border-b border-[#111111] pb-4">
               <div>
                 <span className="flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-[#E11D2A]">
-                  <CubeGuyIcon compact className="h-3.5 w-3.5" /> PINNED DISPATCH // ENTRY NO. 000
+                  <CubeEyesIcon className="h-3.5 w-3.5" /> PINNED DISPATCH // ENTRY NO. 000
                 </span>
                 <h2 className="mt-1 text-2xl font-bold uppercase tracking-tight">
                   ABOUT SIDE B // 026

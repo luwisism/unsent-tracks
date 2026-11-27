@@ -17,7 +17,7 @@ import {
   KeyRound,
   MessageSquare,
 } from "lucide-react";
-import { CubeGuyIcon } from "./ManifestoModal";
+import { CubeEyesIcon } from "./ManifestoModal";
 import { Note, SIGNAL_TYPES, Track, UserProfile } from "../types/archive";
 import { downloadSwissPoster, getContrastText, renderSwissPosterFile } from "../utils/poster";
 import { shareSideBLink, shareSideBStoryFile } from "../utils/share";
