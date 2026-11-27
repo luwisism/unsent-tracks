@@ -119,16 +119,19 @@ export async function GET(request: Request) {
       };
     });
 
+    const formattedStories = storyUsersRaw.map((u) => ({
+      ...u,
+      notes: u.notes.map((sn) => {
+        const { passcode, ...sRest } = sn;
+        return { ...sRest, isPasscodeProtected: Boolean(passcode) };
+      }),
+    }));
+
     return NextResponse.json({
       notes: formattedNotes,
       trendingTags,
-      storyUsers: storyUsersRaw.map((u) => ({
-        ...u,
-        notes: u.notes.map((sn) => {
-          const { passcode, ...sRest } = sn;
-          return { ...sRest, isPasscodeProtected: Boolean(passcode) };
-        }),
-      })),
+      stories: formattedStories,
+      storyUsers: formattedStories,
     });
   } catch {
     return NextResponse.json({ error: "Failed to load transmissions." }, { status: 500 });

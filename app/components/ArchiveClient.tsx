@@ -200,7 +200,8 @@ export default function SwissUnsentPlatform() {
       if (!res.ok) return;
       const data = await res.json();
       if (data.notes) setNotes(data.notes);
-      if (data.stories) setStories(data.stories);
+      const incomingStories = data.stories ?? data.storyUsers;
+      if (Array.isArray(incomingStories)) setStories(incomingStories);
       if (data.availableColors) setAvailableColors(data.availableColors);
       if (data.availableTags) setAvailableTags(data.availableTags);
     } finally {
