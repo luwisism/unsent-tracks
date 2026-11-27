@@ -1,10 +1,14 @@
 "use client";
 
+import { useRef } from "react";
+import { motion } from "motion/react";
 import { StoryUser } from "../types/archive";
+import { TACTILE_SPRING } from "../utils/motion";
 import { getContrastText, getMonogram } from "../utils/poster";
 
 interface StoriesStripProps {
   stories: StoryUser[];
+  isLoading?: boolean;
   darkMode: boolean;
   seenNoteIds: number[];
   followingHandles: string[];
@@ -14,12 +18,14 @@ interface StoriesStripProps {
 
 export default function StoriesStrip({
   stories,
+  isLoading = false,
   darkMode,
   seenNoteIds,
   followingHandles,
   currentUsername,
   onSelectStory,
 }: StoriesStripProps) {
+  const stripRef = useRef<HTMLDivElement | null>(null);
   const borderClass = darkMode ? "border-neutral-700" : "border-[#111111]";
   const sectionBg = darkMode ? "bg-[#121212] text-[#F4F4F0]" : "bg-white text-[#111111]";
 
@@ -80,12 +86,36 @@ export default function StoriesStrip({
           </span>
         </div>
 
-        {enriched.length === 0 ? (
+        {isLoading ? (
+          <div className="flex gap-4 overflow-hidden pb-1">
+            {[0, 1, 2, 3].map((idx) => (
+              <motion.div
+                key={idx}
+                animate={{ opacity: [0.4, 0.85, 0.4] }}
+                transition={{ duration: 1.25, repeat: Infinity, ease: "easeInOut", delay: idx * 0.12 }}
+                className={`flex shrink-0 items-center gap-3 border p-2 pr-4 ${borderClass} ${darkMode ? "bg-[#1B1B1B]" : "bg-[#F4F4F0]"}`}
+              >
+                <div className={`h-11 w-11 shrink-0 border ${borderClass} ${darkMode ? "bg-white/15" : "bg-black/10"}`} />
+                <div className="space-y-2">
+                  <div className={`h-3 w-20 ${darkMode ? "bg-white/15" : "bg-black/10"}`} />
+                  <div className={`h-2.5 w-14 ${darkMode ? "bg-white/10" : "bg-black/[0.07]"}`} />
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        ) : enriched.length === 0 ? (
           <p className="py-2 font-mono text-xs opacity-60">
             No profile transmissions logged in the past 24 hours. Post under a profile to appear here.
           </p>
         ) : (
-          <div className="flex gap-4 overflow-x-auto pb-1">
+          <div ref={stripRef} className="overflow-x-hidden pb-1">
+            <motion.div
+              drag="x"
+              dragConstraints={stripRef}
+              dragElastic={0.22}
+              transition={TACTILE_SPRING}
+              className="flex w-max gap-4 cursor-grab active:cursor-grabbing"
+            >
             {enriched.map(
               ({
                 storyUser,
@@ -114,8 +144,10 @@ export default function StoriesStrip({
                   : "ring-2 ring-[#0047AB] ring-offset-1";
 
                 return (
-                  <button
+                  <motion.button
                     key={storyUser.id}
+                    whileTap={{ scale: 0.93 }}
+                    transition={TACTILE_SPRING}
                     onClick={() => onSelectStory(originalIdx, startSlideIdx)}
                     className={`group flex shrink-0 items-center gap-3 border ${borderStyle} p-2 pr-4 text-left transition ${cardSurface}`}
                   >
@@ -160,10 +192,11 @@ export default function StoriesStrip({
                         {storyUser.archetype} {isSeenAll ? "• SEEN" : `• ${unseenCount} NEW`}
                       </p>
                     </div>
-                  </button>
+                  </motion.button>
                 );
               }
             )}
+            </motion.div>
           </div>
         )}
       </div>

@@ -1,5 +1,7 @@
 "use client";
 
+import { motion } from "motion/react";
+
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Search } from "lucide-react";
 import {
@@ -750,6 +752,7 @@ export default function SwissUnsentPlatform() {
 
       <StoriesStrip
         stories={stories}
+        isLoading={isLoadingNotes && notes.length === 0}
         darkMode={darkMode}
         seenNoteIds={seenNoteIds}
         followingHandles={followingHandles}
@@ -897,46 +900,22 @@ export default function SwissUnsentPlatform() {
                 </div>
 
                 <div className="mb-4 flex items-center gap-3">
-                  <div
-                    className={`sideb-shimmer h-14 w-14 shrink-0 border ${borderClass} ${darkMode ? "bg-white/10" : "bg-black/[0.06]"}`}
-                    style={{ animationDelay: sk.delay }}
-                  />
+                  <motion.div className={`h-14 w-14 shrink-0 border ${borderClass} ${darkMode ? "bg-white/10" : "bg-black/[0.06]"}`} animate={{ opacity: [0.35, 0.9, 0.35] }} transition={{ duration: 1.3, repeat: Infinity, ease: "easeInOut", delay: Number(sk.delay.replace("ms", "")) / 1000 }} />
                   <div className="min-w-0 flex-1 space-y-2">
-                    <div
-                      className={`sideb-shimmer h-3.5 ${sk.w1} ${darkMode ? "bg-white/15" : "bg-black/10"}`}
-                      style={{ animationDelay: sk.delay }}
-                    />
-                    <div
-                      className={`sideb-shimmer h-3 ${sk.w2} ${darkMode ? "bg-white/10" : "bg-black/[0.07]"}`}
-                      style={{ animationDelay: sk.delay }}
-                    />
+                    <motion.div className={`h-3.5 ${sk.w1} ${darkMode ? "bg-white/15" : "bg-black/10"}`} animate={{ opacity: [0.35, 0.9, 0.35] }} transition={{ duration: 1.3, repeat: Infinity, ease: "easeInOut", delay: Number(sk.delay.replace("ms", "")) / 1000 }} />
+                    <motion.div className={`h-3 ${sk.w2} ${darkMode ? "bg-white/10" : "bg-black/[0.07]"}`} animate={{ opacity: [0.35, 0.9, 0.35] }} transition={{ duration: 1.3, repeat: Infinity, ease: "easeInOut", delay: Number(sk.delay.replace("ms", "")) / 1000 }} />
                   </div>
                 </div>
 
                 <div className="mb-5 space-y-2">
-                  <div
-                    className={`sideb-shimmer h-3 ${sk.l1} ${darkMode ? "bg-white/10" : "bg-black/[0.07]"}`}
-                    style={{ animationDelay: sk.delay }}
-                  />
-                  <div
-                    className={`sideb-shimmer h-3 ${sk.l2} ${darkMode ? "bg-white/10" : "bg-black/[0.07]"}`}
-                    style={{ animationDelay: sk.delay }}
-                  />
-                  <div
-                    className={`sideb-shimmer h-3 ${sk.l3} ${darkMode ? "bg-white/10" : "bg-black/[0.07]"}`}
-                    style={{ animationDelay: sk.delay }}
-                  />
+                  <motion.div className={`h-3 ${sk.l1} ${darkMode ? "bg-white/10" : "bg-black/[0.07]"}`} animate={{ opacity: [0.35, 0.9, 0.35] }} transition={{ duration: 1.3, repeat: Infinity, ease: "easeInOut", delay: Number(sk.delay.replace("ms", "")) / 1000 }} />
+                  <motion.div className={`h-3 ${sk.l2} ${darkMode ? "bg-white/10" : "bg-black/[0.07]"}`} animate={{ opacity: [0.35, 0.9, 0.35] }} transition={{ duration: 1.3, repeat: Infinity, ease: "easeInOut", delay: Number(sk.delay.replace("ms", "")) / 1000 }} />
+                  <motion.div className={`h-3 ${sk.l3} ${darkMode ? "bg-white/10" : "bg-black/[0.07]"}`} animate={{ opacity: [0.35, 0.9, 0.35] }} transition={{ duration: 1.3, repeat: Infinity, ease: "easeInOut", delay: Number(sk.delay.replace("ms", "")) / 1000 }} />
                 </div>
 
                 <div className={`flex items-center justify-between border-t ${borderClass} pt-3`}>
-                  <div
-                    className={`sideb-shimmer h-3 w-20 ${darkMode ? "bg-white/10" : "bg-black/[0.07]"}`}
-                    style={{ animationDelay: sk.delay }}
-                  />
-                  <div
-                    className={`sideb-shimmer h-3 w-14 ${darkMode ? "bg-white/10" : "bg-black/[0.07]"}`}
-                    style={{ animationDelay: sk.delay }}
-                  />
+                  <motion.div className={`h-3 w-20 ${darkMode ? "bg-white/10" : "bg-black/[0.07]"}`} animate={{ opacity: [0.35, 0.9, 0.35] }} transition={{ duration: 1.3, repeat: Infinity, ease: "easeInOut", delay: Number(sk.delay.replace("ms", "")) / 1000 }} />
+                  <motion.div className={`h-3 w-14 ${darkMode ? "bg-white/10" : "bg-black/[0.07]"}`} animate={{ opacity: [0.35, 0.9, 0.35] }} transition={{ duration: 1.3, repeat: Infinity, ease: "easeInOut", delay: Number(sk.delay.replace("ms", "")) / 1000 }} />
                 </div>
               </div>
             ))}
