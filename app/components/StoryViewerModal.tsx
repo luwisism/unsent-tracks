@@ -50,19 +50,26 @@ export default function StoryViewerModal({
   const fg = getContrastText(sNote.moodColor);
   const isLight = fg === "#111111";
 
+  const handleScrollPause = () => {
+    if (!isStoryPaused) {
+      setIsStoryPaused(true);
+    }
+  };
+
   return (
     <div
       onClick={onClose}
       style={{ backgroundColor: "#111111" }}
-      className="fixed inset-0 z-50 flex min-h-dvh items-stretch sm:items-center justify-center bg-[#111111] sm:!bg-black/90 p-2 sm:p-4 sm:backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex h-dvh items-stretch sm:items-center justify-center bg-[#111111] sm:!bg-black/90 p-2 sm:p-4 sm:backdrop-blur-sm"
     >
       <div
         onClick={(e) => e.stopPropagation()}
         style={{ backgroundColor: sNote.moodColor, color: fg }}
-        className="relative flex flex-1 w-full max-w-none flex-col justify-between overflow-hidden rounded-2xl border-0 sm:flex-none sm:rounded-none sm:min-h-0 sm:h-[86vh] sm:max-h-[760px] sm:max-w-md sm:border-2 sm:border-white/30 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(4.5rem,calc(env(safe-area-inset-bottom)+3.5rem))] px-6 sm:shadow-2xl select-none"
+        className="relative flex max-h-full flex-1 w-full max-w-none flex-col overflow-hidden rounded-2xl border-0 sm:flex-none sm:rounded-none sm:h-[86vh] sm:max-h-[760px] sm:max-w-md sm:border-2 sm:border-white/30 pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(1.25rem,env(safe-area-inset-bottom))] px-5 sm:px-6 sm:shadow-2xl"
       >
-        <div>
-          <div className="mb-4 flex gap-1.5">
+        {/* Pinned Header: Progress Bars + Author */}
+        <div className="shrink-0">
+          <div className="mb-3.5 flex gap-1.5">
             {storyUser.notes.map((n, idx) => {
               const fillPct =
                 idx < storyIndex ? 100 : idx === storyIndex ? storyProgress : 0;
@@ -80,35 +87,35 @@ export default function StoryViewerModal({
             })}
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between pb-3 border-b border-current/15">
             <button
               onClick={() => {
                 onClose();
                 onOpenProfile(storyUser.username);
               }}
-              className="flex items-center gap-2.5 text-left"
+              className="flex items-center gap-2.5 text-left min-w-0"
             >
               <span
                 style={{
                   backgroundColor: storyUser.monogramColor,
                   color: getContrastText(storyUser.monogramColor),
                 }}
-                className="flex h-8 w-8 items-center justify-center border border-current font-mono text-xs font-bold"
+                className="flex h-8 w-8 shrink-0 items-center justify-center border border-current font-mono text-xs font-bold"
               >
                 {getMonogram(storyUser.username)}
               </span>
-              <div>
-                <p className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider">
-                  <span>@{storyUser.username}</span>
+              <div className="min-w-0">
+                <p className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider truncate">
+                  <span className="truncate">@{storyUser.username}</span>
                   <MemberBadge badge={storyUser.badge} lightSurface={false} />
                 </p>
-                <p className="font-mono text-[10px] opacity-75">
+                <p className="font-mono text-[10px] opacity-75 truncate">
                   NO.{formatIndex(sNote.id)} • {storyUser.archetype}
                 </p>
               </div>
             </button>
 
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 shrink-0">
               <button
                 onClick={() => setIsStoryPaused(!isStoryPaused)}
                 className="border border-current/40 p-1.5 hover:bg-black/20"
@@ -122,6 +129,7 @@ export default function StoryViewerModal({
               </button>
               <button
                 onClick={onClose}
+                aria-label="Close Story"
                 className="border border-current/40 p-1.5 hover:bg-black/20"
               >
                 <X className="h-4 w-4" />
@@ -130,36 +138,30 @@ export default function StoryViewerModal({
           </div>
         </div>
 
-        {/* Tap Zones */}
+        {/* Scrollable Story Body (Desktop + Mobile) */}
         <div
-          onClick={onPrev}
-          className="absolute inset-y-24 left-0 w-1/4 cursor-pointer z-10"
-          title="Previous"
-        />
-        <div
-          onClick={onNext}
-          className="absolute inset-y-24 right-0 w-1/4 cursor-pointer z-10"
-          title="Next"
-        />
-
-        <div className="relative z-20 my-auto py-4">
+          onWheel={handleScrollPause}
+          onTouchMove={handleScrollPause}
+          className="my-2 flex-1 min-h-0 overflow-y-auto overscroll-contain py-3 pr-1 touch-pan-y"
+        >
           <p className="mb-2 font-mono text-xs font-bold uppercase tracking-[0.18em] opacity-80">
             TO: {sNote.recipient}
           </p>
-          <p className="whitespace-pre-wrap text-xl font-medium leading-relaxed">
+          <p className="whitespace-pre-wrap break-words text-lg sm:text-xl font-medium leading-relaxed">
             “{sNote.message}”
           </p>
 
           {sNote.lyricExcerpt && (
             <div className="mt-5 border-l-2 border-current pl-3">
-              <p className="whitespace-pre-line font-mono text-xs italic opacity-90">
+              <p className="whitespace-pre-line break-words font-mono text-xs italic opacity-90">
                 ♪ “{sNote.lyricExcerpt}”
               </p>
             </div>
           )}
         </div>
 
-        <div className="relative z-20 space-y-3">
+        {/* Pinned Footer: Signals + Track Player */}
+        <div className="shrink-0 pt-2 space-y-3 border-t border-current/15">
           <div className="flex flex-wrap gap-1.5">
             {SIGNAL_TYPES.map((sig) => {
               const isSent = sentSignals[`${sNote.id}-${sig.key}`];
@@ -189,7 +191,7 @@ export default function StoryViewerModal({
                 <img
                   src={sNote.albumArt}
                   alt=""
-                  className="h-10 w-10 border border-[#111111] object-cover"
+                  className="h-10 w-10 shrink-0 border border-[#111111] object-cover"
                 />
               )}
               <div className="min-w-0">
@@ -201,9 +203,10 @@ export default function StoryViewerModal({
               </div>
             </div>
 
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 shrink-0">
               <button
                 onClick={onPrev}
+                aria-label="Previous Story"
                 className="border border-[#111111] bg-white p-1.5 hover:bg-[#111111] hover:text-white"
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -219,6 +222,7 @@ export default function StoryViewerModal({
                       false
                     )
                   }
+                  aria-label={isPlaying ? "Pause Preview" : "Play Preview"}
                   className="border border-[#111111] bg-[#111111] p-1.5 text-white hover:bg-[#E11D2A]"
                 >
                   {isPlaying ? (
@@ -230,6 +234,7 @@ export default function StoryViewerModal({
               )}
               <button
                 onClick={onNext}
+                aria-label="Next Story"
                 className="border border-[#111111] bg-white p-1.5 hover:bg-[#111111] hover:text-white"
               >
                 <ChevronRight className="h-4 w-4" />
