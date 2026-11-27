@@ -2,12 +2,14 @@ import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   context: { params: Promise<{ username: string }> }
 ) {
   try {
     const { username } = await context.params;
     const clean = username.trim().toLowerCase().replace(/^@+/, "");
+    const { searchParams } = new URL(request.url);
+    const viewerId = Number(searchParams.get("viewerId") || 0);
 
     const user = await prisma.user.findUnique({
       where: { username: clean },
@@ -29,12 +31,31 @@ export async function GET(
         pinnedNoteId: true,
         isSuspended: true,
         createdAt: true,
+        followers: {
+          include: {
+            follower: {
+              select: { id: true, username: true, badge: true, monogramColor: true },
+            },
+          },
+          orderBy: { createdAt: "desc" },
+        },
+        following: {
+          include: {
+            following: {
+              select: { id: true, username: true, badge: true, monogramColor: true },
+            },
+          },
+          orderBy: { createdAt: "desc" },
+        },
         notes: {
           where: { isHidden: false },
           orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
           include: {
             reactions: { select: { id: true, type: true } },
             replies: { orderBy: { createdAt: "asc" } },
+            user: {
+              select: { id: true, username: true, badge: true, monogramColor: true, archetype: true },
+            },
           },
         },
       },
@@ -44,12 +65,44 @@ export async function GET(
       return NextResponse.json({ error: "Profile not found." }, { status: 404 });
     }
 
-    return NextResponse.json({
-      ...user,
-      notes: user.notes.map((n) => {
+    const repliedNotesRaw = await prisma.note.findMany({
+      where: {
+        isHidden: false,
+        replies: { some: { senderHandle: user.username } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 30,
+      include: {
+        reactions: { select: { id: true, type: true } },
+        replies: { orderBy: { createdAt: "asc" } },
+        user: {
+          select: { id: true, username: true, badge: true, monogramColor: true, archetype: true },
+        },
+      },
+    });
+
+    const sanitizeNotes = <T extends { passcode?: string | null }>(list: T[]) =>
+      list.map((n) => {
         const { passcode, ...rest } = n;
         return { ...rest, isPasscodeProtected: Boolean(passcode) };
-      }),
+      });
+
+    const sanitizedAuthored = sanitizeNotes(user.notes);
+    const { followers, following, ...profileFields } = user;
+
+    return NextResponse.json({
+      ...profileFields,
+      notes: sanitizedAuthored,
+      activity: {
+        badge: user.badge,
+        followersCount: followers.length,
+        followingCount: following.length,
+        isFollowing: viewerId ? followers.some((f) => f.followerId === viewerId) : false,
+        followers: followers.map((f) => f.follower),
+        following: following.map((f) => f.following),
+        authoredNotes: sanitizedAuthored,
+        repliedNotes: sanitizeNotes(repliedNotesRaw),
+      },
     });
   } catch {
     return NextResponse.json({ error: "Failed to load profile." }, { status: 500 });

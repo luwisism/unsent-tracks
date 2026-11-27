@@ -119,6 +119,49 @@ export default function ProfileModal({
   }, [profile.pinnedNoteId, profile.badge, profile.username]);
 
   useEffect(() => {
+    const preloaded = (profile as UserProfile & {
+      activity?: {
+        badge?: string | null;
+        followersCount: number;
+        followingCount: number;
+        isFollowing: boolean;
+        followers: MiniUser[];
+        following: MiniUser[];
+        authoredNotes: Note[];
+        repliedNotes: Note[];
+      };
+    }).activity;
+
+    if (preloaded) {
+      if (preloaded.badge !== undefined) setLiveBadge(preloaded.badge);
+      setFollowersCount(preloaded.followersCount ?? 0);
+      setFollowingCount(preloaded.followingCount ?? 0);
+      setIsFollowing(Boolean(preloaded.isFollowing));
+      setFollowersList(preloaded.followers || []);
+      setFollowingList(preloaded.following || []);
+      const combined: ActivityItem[] = [
+        ...(preloaded.authoredNotes || []).map((n: Note) => ({
+          id: `posted-${n.id}`,
+          type: "POSTED",
+          summary: `Broadcast transmission #${String(n.id).padStart(3, "0")} to ${n.recipient}`,
+          noteId: n.id,
+          target: n.recipient || null,
+          createdAt: n.createdAt,
+        })),
+        ...(preloaded.repliedNotes || []).map((n: Note) => ({
+          id: `replied-${n.id}`,
+          type: "REPLIED",
+          summary: `Sent a frequency reply on #${String(n.id).padStart(3, "0")} (${n.recipient})`,
+          noteId: n.id,
+          target: n.recipient || null,
+          createdAt: n.createdAt,
+        })),
+      ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      setActivities(combined);
+      setLoadingFeed(false);
+      return;
+    }
+
     let mounted = true;
     setLoadingFeed(true);
     const viewerParam = currentUser?.id ? `?viewerId=${currentUser.id}` : "";

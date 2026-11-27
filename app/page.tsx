@@ -626,7 +626,44 @@ export default function SwissUnsentPlatform() {
   };
 
   const openProfile = async (username: string) => {
-    const res = await fetch(`/api/users/${encodeURIComponent(username)}`);
+    const clean = username.trim().toLowerCase().replace(/^@+/, "");
+    const knownUser =
+      (currentUser?.username.toLowerCase() === clean ? currentUser : null) ||
+      notes.find((n) => n.user?.username.toLowerCase() === clean)?.user ||
+      stories.find((s) => s.username.toLowerCase() === clean);
+
+    const cachedNotes = notes.filter((n) => n.user?.username.toLowerCase() === clean);
+
+    if (knownUser) {
+      setViewedProfile((prev) =>
+        prev?.username.toLowerCase() === clean
+          ? prev
+          : {
+              id: knownUser.id,
+              username: knownUser.username,
+              badge: knownUser.badge ?? null,
+              monogramColor: knownUser.monogramColor || "#111111",
+              bio: "bio" in knownUser ? (knownUser.bio as string) : "",
+              archetype: knownUser.archetype || "ARCHIVE",
+              tags: knownUser.tags || knownUser.archetype || "ARCHIVE",
+              frequency: "frequency" in knownUser ? (knownUser.frequency as string) : "02:00 AM",
+              coordinates:
+                "coordinates" in knownUser
+                  ? (knownUser.coordinates as string)
+                  : "UNLISTED FREQUENCY",
+              anthemTrackId: "anthemTrackId" in knownUser ? (knownUser.anthemTrackId as string | null) : null,
+              anthemTrackName: "anthemTrackName" in knownUser ? (knownUser.anthemTrackName as string | null) : null,
+              anthemArtist: "anthemArtist" in knownUser ? (knownUser.anthemArtist as string | null) : null,
+              anthemAlbumArt: "anthemAlbumArt" in knownUser ? (knownUser.anthemAlbumArt as string | null) : null,
+              anthemPreview: "anthemPreview" in knownUser ? (knownUser.anthemPreview as string | null) : null,
+              pinnedNoteId: "pinnedNoteId" in knownUser ? (knownUser.pinnedNoteId as number | null) : null,
+              notes: cachedNotes,
+            }
+      );
+    }
+
+    const viewerParam = currentUser?.id ? `?viewerId=${currentUser.id}` : "";
+    const res = await fetch(`/api/users/${encodeURIComponent(clean)}${viewerParam}`);
     if (res.ok) {
       const profileData = await res.json();
       setViewedProfile(profileData);
